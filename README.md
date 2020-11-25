@@ -1,24 +1,18 @@
-# webdesk
+桌面图标要求：自动排序，也就是一定要一个接一个排放
+关于桌面图标的排列问题：希望能按照屏幕高度来判断一列能放多少个图标
+图标固定宽高
+一列就是一个ul  列中的图标就是ul的li
 
-## Project setup
-```
-npm install
-```
+设备height除以li的height = 一列图标个数（以后的限制条件）
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
 
-### Compiles and minifies for production
-```
-npm run build
-```
+对于图标设计：
+1. 考虑到需要快速定位到点击的图标位置，所以采用了二维数组渲染
+2. 考虑到要实现拖拽换位，所以使用了链表结构，方便实现插入删除操作
+综合考虑，通过链表进行记录图标的拖拽，然后二维数组则通过链表进行渲染
+(链表一个个节点插入到二维数组里，当到y轴个数极限时，x+1， y=0，继续添加)
 
-### Lints and fixes files
-```
-npm run lint
-```
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+
+当往下一个图标拖动的时候出现特殊情况，preReplace=dragNode
+以及当拖动第一个图标到第二个图标时也属于特殊情况 preDragNode=null
