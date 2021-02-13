@@ -2,7 +2,7 @@
   <div class="footer">
     <div class="begin"></div>
     <div class="right-content">
-      <div class="time">
+      <div class="time" @click.stop="changeCalendar">
         <span>{{ time }}</span>
         <span>{{ date }}</span>
       </div>
@@ -12,6 +12,7 @@
 </template>
 <script>
 export default {
+  props: ['changeCalendar'],
   data() {
     return {
       time: "12:00",
@@ -68,6 +69,7 @@ export default {
   width: 150px;
   box-sizing: border-box;
   right: 0;
+  user-select: none;
 }
 .right-content .time {
   display: flex;

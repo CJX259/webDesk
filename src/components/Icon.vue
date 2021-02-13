@@ -31,5 +31,6 @@ export default {
   color: #fff;
   line-height: 15px;
   justify-content: center;
+  user-select: none;
 }
 </style>

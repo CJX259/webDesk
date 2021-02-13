@@ -1,5 +1,5 @@
 <template>
-  <div id="home">
+  <div id="home" @click="contentClick">
     <!-- 此处要做一个栅格，透明背景 -->
     <!-- 当 -->
     <div class="wrapper">
@@ -25,22 +25,33 @@
         </li>
       </ul>
     </div>
-    <Calendar />
-    <Footer />
+    <transition name="downClose">
+      <template v-if="showCalendar">
+        <Calendar />
+      </template>
+    </transition>
+    <transition v-if="app.title">
+      <Application :name="app.title" />
+    </transition>
+    <Footer :changeCalendar="rightCalendar" />
   </div>
 </template>
 <script>
 import Icon from "./Icon";
 import Footer from "./Footer";
-import Calendar from "./Calendar"
+import Calendar from "./Calendar";
+import Application from "./Application";
+
 export default {
   components: {
     Footer,
     Icon,
-    Calendar
+    Calendar,
+    Application,
   },
   data() {
     return {
+      // 图标管理所需变量
       icons: [[]],
       colLength: 8,
       wrapperLength: 0,
@@ -60,11 +71,29 @@ export default {
       // 前一个节点
       prevReplaceNode: null,
       prevDragNode: null,
-      // 管理日历
-      showCalendar : true
+
+      // 管理日历变量
+      showCalendar: false,
+
+      // 管理打开程序变量
+      // 双击点开的app
+      app: {},
+      // 监听双击的监听器
+      doubleClickListen: null,
     };
   },
   methods: {
+    // 改变日历展示
+    // 点击右下角
+    rightCalendar() {
+      this.showCalendar = !this.showCalendar;
+    },
+    contentClick() {
+      if (this.showCalendar) {
+        this.showCalendar = false;
+        return;
+      }
+    },
     // 处理拖拽图标事件的end
     handleDragEnd(e) {
       if (!this.dragIconIndex) {
@@ -142,8 +171,6 @@ export default {
       // 出bug后this.dragNode为null
       // 进行插入操作
       this.insertIcon(lastFlag);
-      // }
-      // console.log(this.replaceIconIndex.x, this.replaceIconIndex.y);
     },
     // 插入那个拖拽的图标,实现这个貌似需要prev指针
     insertIcon(lastFlag) {
@@ -319,7 +346,8 @@ export default {
     clickIcon(e) {
       // 点击图标事件
       // 通过鼠标的左标判断当前点击的是哪个图标
-
+      // 是否触发双击的flag
+      var flag = false;
       var x = 1;
       var y = 1;
       //   padding-right：3px
@@ -333,18 +361,43 @@ export default {
         y++;
       }
       // 把active都清false
+      // 如果x，y = preX，preY
+      // 触发双击事件
+
       if (this.preX != 0) {
         this.icons[this.preX - 1][this.preY - 1].active = false;
       }
       //如果点击的地方有图标，就变为active
       // 如果没有图标，就不进行处理，清除preX，preY
       if (this.icons[x - 1][y - 1].title != "") {
-        this.icons[x - 1][y - 1].active = true;
-        this.preY = y;
-        this.preX = x;
+        if (this.preX === x && this.preY === y) {
+          this.doubleClick(this.icons[x - 1][y - 1]);
+          flag = true;
+          // 触发完再初始化
+          this.preX = 0;
+          this.preY = 0;
+        } else {
+          this.icons[x - 1][y - 1].active = true;
+          this.preY = y;
+          this.preX = x;
+        }
       } else {
         this.preX = 0;
         this.preY = 0;
+      }
+      // 点击完后设置定时器监听双击
+      if (!flag) {
+        this.doubleClickListen = setTimeout(() => {
+          this.doubleClickListen = null;
+        }, 500);
+      }
+    },
+    // 双击事件
+    doubleClick(icon) {
+      // 如果不在setTimeout期间内再点击，则无法触发双击事件
+      if (this.doubleClickListen) {
+        this.app = icon;
+        console.log("双击事件");
       }
     },
   },
@@ -366,7 +419,7 @@ export default {
       "回收站",
       "项目文件",
       "微信",
-      "chrome",
+      "个人博客",
       "英雄联盟",
       "VUE",
       "我的电脑",
@@ -448,5 +501,19 @@ export default {
   width: 100%;
   margin-bottom: 3px;
   height: 65px;
+}
+.downClose-enter,
+.downClose-leave-to {
+  transform: translateY(20%);
+  opacity: 0;
+}
+.downClose-enter-to,
+.downClose-leave {
+  transform: translateY(0);
+  opacity: 1;
+}
+.downClose-enter-active,
+.downClose-leave-active {
+  transition: all 0.2s ease;
 }
 </style>

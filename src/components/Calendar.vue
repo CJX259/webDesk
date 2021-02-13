@@ -1,6 +1,6 @@
 //需要给该组件出现的left和top
 <template>
-  <div class="calendar" ref="calendar">
+  <div @click.stop="stopPropagation" class="calendar" ref="calendar">
     <div class="calendar-top">
       <div class="calendar-time">{{ time }}</div>
       <div class="calendar-date">
@@ -28,7 +28,7 @@
             {{ item }}
           </li>
         </ul>
-        <ul ref="pointWrapper" :class="['day',{up:up, down : down}]">
+        <ul ref="pointWrapper" :class="['day', { up: up, down: down }]">
           <!-- 鼠标的光源点 -->
           <!-- <div ref="point" :class="['point', { in: pointPosition }]"></div> -->
           <li
@@ -67,10 +67,14 @@ export default Vue.extend({
       pointPosition: null,
       title: "",
       up: false,
-      down : false
+      down: false,
     };
   },
   methods: {
+    //禁止冒泡
+    stopPropagation() {
+      // console.log(e);
+    },
     //
     handleMove() {
       // -15 padding-left
@@ -104,14 +108,8 @@ export default Vue.extend({
       // 下一个月份
       this.nextMonth = this.monthNow + 1 == 12 ? 0 : this.monthNow + 1;
       this.year = date.getFullYear();
-      // 得好好看看创建Date对象时传的参数
-      // 获得当月的天数
-      // nextMonth月1号，+0-1  得monthNow
-      this.dayNum = new Date(this.year, this.nextMonth, 0).getDate();
-      // 获得这个月第一天是周几(从1开始)
-      this.weekIndex = new Date(this.year, this.monthNow, 1).getDay();
-      // 获得上个月最后一天(也就是上个月有几天)
-      this.preMonthDay = new Date(this.year, this.monthNow, 0).getDate();
+      // 通过年月来得出days的数据
+      this.getDataByYearAndMonth();
       this.renderDays();
     },
     handleUp() {
@@ -127,12 +125,26 @@ export default Vue.extend({
       } else {
         this.nextMonth--;
         this.monthNow--;
-        this.dayNum = new Date(this.year, this.nextMonth, 0).getDate();
-        this.weekIndex = new Date(this.year, this.monthNow, 1).getDay();
-        this.preMonthDay = new Date(this.year, this.monthNow, 0).getDate();
+        this.getDataByYearAndMonth();
       }
       this.up = true;
-      console.log(this.up);
+      this.renderDays();
+    },
+    getDataByYearAndMonth() {
+      // 得好好看看创建Date对象时传的参数
+      // 获得当月的天数
+      // nextMonth月1号，+0-1  得monthNow
+      this.dayNum = new Date(this.year, this.nextMonth, 0).getDate();
+      // 获得这个月第一天是周几(从1开始  +1-1，第0天)
+      this.weekIndex = new Date(this.year, this.monthNow, 1).getDay();
+      // 获得上个月最后一天(也就是上个月有几天)
+      this.preMonthDay = new Date(this.year, this.monthNow, 0).getDate();
+    },
+    //跳到某一年的某一月
+    jumpTo(month, year=this.year){
+      this.monthNow = month;
+      this.year = year;
+      this.getDataByYearAndMonth();
       this.renderDays();
     },
     handleDown() {
@@ -148,9 +160,7 @@ export default Vue.extend({
       } else {
         this.nextMonth++;
         this.monthNow++;
-        this.dayNum = new Date(this.year, this.nextMonth, 0).getDate();
-        this.weekIndex = new Date(this.year, this.monthNow, 1).getDay();
-        this.preMonthDay = new Date(this.year, this.monthNow, 0).getDate();
+        this.getDataByYearAndMonth();
       }
       this.renderDays();
     },
@@ -230,7 +240,7 @@ export default Vue.extend({
 <style lang="less" scoped>
 .calendar {
   width: 400px;
-  background-color: #2f5c4d;
+  background-color: #1c3d32;
   height: 520px;
   position: absolute;
   color: #eee;
@@ -324,8 +334,8 @@ export default Vue.extend({
         border: 1px solid transparent;
         // border: 1px solid #eee;
         box-sizing: border-box;
-        &:hover{
-          border: 1px solid #eee;
+        &:hover {
+          border: 1px solid #ccc;
         }
       }
     }
@@ -333,7 +343,7 @@ export default Vue.extend({
       color: #999;
     }
     .today {
-      background-color: #0b6d6d;
+      background-color: #0f5353;
       border: 1px solid #333;
       width: 50px;
       width: 50px;
