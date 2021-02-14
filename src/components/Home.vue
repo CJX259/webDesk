@@ -426,7 +426,7 @@ export default {
       "回收站",
       "项目文件",
       "微信",
-      "chrome",
+      "选课系统",
       "英雄联盟",
       "VUE",
     ];
@@ -467,7 +467,7 @@ export default {
   },
 };
 </script>
-<style scoped>
+<style lang="less" scoped>
 #home {
   overflow: hidden;
   width: 100%;
@@ -478,30 +478,31 @@ export default {
   background-size: cover;
   box-sizing: border-box;
   position: relative;
+  .wrapper {
+    min-width: 1536px;
+    height: 682px;
+    box-sizing: border-box;
+    position: absolute;
+    padding: 5px;
+    bottom: 40px;
+    .col {
+      display: inline-block;
+      vertical-align: bottom;
+      min-height: 682px;
+      width: 60px;
+      padding-right: 3px;
+      &.last {
+        margin: 0;
+      }
+      li {
+        width: 100%;
+        margin-bottom: 3px;
+        height: 65px;
+      }
+    }
+  }
 }
-.wrapper {
-  min-width: 1536px;
-  height: 682px;
-  box-sizing: border-box;
-  position: absolute;
-  padding: 5px;
-  bottom: 40px;
-}
-.wrapper .col {
-  display: inline-block;
-  vertical-align: bottom;
-  min-height: 682px;
-  width: 60px;
-  padding-right: 3px;
-}
-.wrapper .col.last {
-  margin: 0;
-}
-.wrapper .col li {
-  width: 100%;
-  margin-bottom: 3px;
-  height: 65px;
-}
+
 .downClose-enter,
 .downClose-leave-to {
   transform: translateY(20%);

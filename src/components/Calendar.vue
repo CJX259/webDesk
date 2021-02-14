@@ -248,6 +248,7 @@ export default Vue.extend({
   bottom: 40px;
   // bottom: -480px;
   right: 0;
+  z-index: 100;
   &-time {
     width: 100%;
     padding: 15px;
