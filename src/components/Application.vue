@@ -2,8 +2,8 @@
   <div class="application-wrapper">
     <div class="header">
       <div class="left">
-        <div class="page">
-          <div class="title">{{ name }}</div>
+        <div class="page" v-for="(app, i) in apps" :key="i">
+          <div class="title">{{ app.title }}</div>
           <img class="close" src="../assets/close.png" />
         </div>
       </div>
@@ -13,35 +13,45 @@
         <div class="close"></div>
       </div>
     </div>
-    <iframe class="webpage" :src="webPage.url" frameborder="0"></iframe>
+    <div v-for="(page, i) in webPage" :key="i">
+      <iframe
+        v-show="i === activeIndex"
+        class="webpage"
+        :src="page"
+        frameborder="0"
+      ></iframe>
+    </div>
   </div>
 </template>
 
 <script>
 export default {
-  props: ["name"],
+  props: ["apps"],
   data() {
     return {
-      webPage: {
-        url: "",
-      },
       dataMap: {
         个人博客: "http://www.jessyblog.cn/jessy/index",
         选课系统: "http://www.jessyblog.cn:8080",
       },
+      activeIndex: 0,
     };
   },
+  computed: {
+    webPage() {
+      let pageUrl = this.apps.map((app) => {
+        return this.dataMap[app.title] ? this.dataMap[app.title] : "";
+      })
+      console.log(pageUrl);
+      return pageUrl;
+    },
+  },
   watch: {
-    name(newValue, oldValue) {
-      if (newValue == oldValue) {
-        return;
-      } else {
-        this.webPage.url = this.dataMap[newValue] ? this.dataMap[newValue] : "";
-      }
+    apps(newValue) {
+      this.activeIndex = newValue.length - 1;
     },
   },
   created() {
-    this.webPage.url = this.dataMap[this.name] ? this.dataMap[this.name] : "";
+    // console.log(this.webPage);
   },
 };
 </script>
@@ -139,9 +149,8 @@ export default {
     }
   }
   .webpage {
-  width: 100%;
-  height: 600px;
+    width: 100%;
+    height: 600px;
   }
 }
-
 </style>

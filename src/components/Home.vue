@@ -30,8 +30,8 @@
         <Calendar />
       </template>
     </transition>
-    <transition v-if="app.title">
-      <Application :name="app.title" />
+    <transition v-if="apps.length !== 0">
+      <Application :apps="apps" />
     </transition>
     <Footer :changeCalendar="rightCalendar" />
   </div>
@@ -77,7 +77,7 @@ export default {
 
       // 管理打开程序变量
       // 双击点开的app
-      app: {},
+      apps: [],
       // 监听双击的监听器
       doubleClickListen: null,
     };
@@ -172,7 +172,7 @@ export default {
       // 进行插入操作
       this.insertIcon(lastFlag);
     },
-    // 插入那个拖拽的图标,实现这个貌似需要prev指针
+    // 插入那个拖拽的图标,实现这个需要prev指针
     insertIcon(lastFlag) {
       if (this.dragNode === this.replaceNode) {
         return;
@@ -291,29 +291,6 @@ export default {
         }
       }
     },
-    // 这个函数被取代了
-    renderWrapper(titles, imgUrls) {
-      var col = titles.length;
-      for (var x = 0; x < col; x++) {
-        if (this.wrapperLength <= x) {
-          // 越界了,超过了屏幕的宽度
-          throw new Error("数据超出屏幕宽度");
-        }
-        var row = titles[x].length;
-        for (var y = 0; y < row; y++) {
-          if (y >= this.colLength) {
-            // 越界，超过屏幕高度
-            throw new Error("数据超出屏幕高度");
-          }
-          if (!titles[x][y] || !imgUrls[x][y]) {
-            throw new Error("标题与图标数据不匹配");
-          } else {
-            this.icons[x][y].title = titles[x][y];
-            this.icons[x][y].img = imgUrls[x][y];
-          }
-        }
-      }
-    },
     // 根据屏幕尺寸计算出x，y的最大值
     // 再把所有网格都渲染出来
     init() {
@@ -371,7 +348,10 @@ export default {
       // 如果没有图标，就不进行处理，清除preX，preY
       if (this.icons[x - 1][y - 1].title != "") {
         if (this.preX === x && this.preY === y) {
-          this.doubleClick(this.icons[x - 1][y - 1]);
+          // 出现问题：当图标移动时，icons改变，跟着这里的icon也会变
+          // 导致展示中的页面自动变化
+          const icon = this.icons[x-1][y-1];
+          this.doubleClick(icon);
           flag = true;
           // 触发完再初始化
           this.preX = 0;
@@ -396,8 +376,7 @@ export default {
     doubleClick(icon) {
       // 如果不在setTimeout期间内再点击，则无法触发双击事件
       if (this.doubleClickListen) {
-        this.app = icon;
-        console.log("双击事件");
+        this.apps.push(icon);
       }
     },
   },
