@@ -30,8 +30,15 @@
         <Calendar />
       </template>
     </transition>
-    <transition v-if="apps.length !== 0">
-      <Application :apps="apps" />
+    <transition name="app">
+      <template v-if="apps.length !== 0">
+        <Application
+          :apps="apps"
+          :clearApps="clearApps"
+          :closePageByIndex="closePage"
+          :updateActive="updateActive"
+        />
+      </template>
     </transition>
     <Footer :changeCalendar="rightCalendar" />
   </div>
@@ -78,11 +85,22 @@ export default {
       // 管理打开程序变量
       // 双击点开的app
       apps: [],
+      // 给子组件监听，来修改active
+      updateActive: false,
+
       // 监听双击的监听器
       doubleClickListen: null,
     };
   },
   methods: {
+    // 清除apps
+    clearApps() {
+      this.apps = [];
+      this.changeActive = 0;
+    },
+    closePage(index) {
+      this.apps.splice(index, 1);
+    },
     // 改变日历展示
     // 点击右下角
     rightCalendar() {
@@ -350,7 +368,7 @@ export default {
         if (this.preX === x && this.preY === y) {
           // 出现问题：当图标移动时，icons改变，跟着这里的icon也会变
           // 导致展示中的页面自动变化
-          const icon = this.icons[x-1][y-1];
+          const icon = this.icons[x - 1][y - 1];
           this.doubleClick(icon);
           flag = true;
           // 触发完再初始化
@@ -377,6 +395,8 @@ export default {
       // 如果不在setTimeout期间内再点击，则无法触发双击事件
       if (this.doubleClickListen) {
         this.apps.push(icon);
+        // 双击更新的apps，提醒子组件来更新active
+        this.updateActive = !this.updateActive;
       }
     },
   },
@@ -495,5 +515,19 @@ export default {
 .downClose-enter-active,
 .downClose-leave-active {
   transition: all 0.2s ease;
+}
+
+.app-enter,
+.app-leave-to {
+  transform: scale(0);
+}
+.app-enter-active,
+.app-leave-active {
+  transition: all 3s linear;
+}
+
+.app-leave,
+.app-enter-to {
+  transform: scale(1);
 }
 </style>
