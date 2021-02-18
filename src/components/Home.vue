@@ -261,6 +261,11 @@ export default {
     },
     // 处理拖拽图标事件的start
     handleDragStart(e) {
+      // 打开窗口时禁止拖动
+      if(this.apps.length !== 0) {
+        alert("打开窗口时禁止拖动图标");
+        return;
+      }
       var x = 1;
       var y = 1;
       //   padding-right：3px
@@ -390,10 +395,14 @@ export default {
         }, 500);
       }
     },
-    // 双击事件
+    // 双击事件，窗口打开时禁止拖动图标
     doubleClick(icon) {
       // 如果不在setTimeout期间内再点击，则无法触发双击事件
       if (this.doubleClickListen) {
+        if(this.apps.length >= 11) {
+          alert("同时最多开启11个窗口");
+          return;
+        }
         this.apps.push(icon);
         // 双击更新的apps，提醒子组件来更新active
         this.updateActive = !this.updateActive;
@@ -479,6 +488,7 @@ export default {
   position: relative;
   .wrapper {
     min-width: 1536px;
+    top: 0;
     height: 682px;
     box-sizing: border-box;
     position: absolute;
@@ -519,15 +529,17 @@ export default {
 
 .app-enter,
 .app-leave-to {
-  transform: scale(0);
+  transform: scale(0.9);
+  opacity: 0.1;
 }
 .app-enter-active,
 .app-leave-active {
-  transition: all 3s linear;
+  transition: transform .2s linear;
 }
 
 .app-leave,
 .app-enter-to {
+  opacity: 1;
   transform: scale(1);
 }
 </style>
