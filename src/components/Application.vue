@@ -1,10 +1,11 @@
 <template>
-  <div class="application-wrapper" ref="appWrapper">
-    <div
-      class="header"
-      @mousedown="onMousedown($event)"
-      @mouseup="onMouseup"
-    >
+  <div
+    class="application-wrapper"
+    :class="{ active: this.activeWrapper == 'chrome' }"
+    @click="changeActiveWrapper('chrome')"
+    ref="appWrapper"
+  >
+    <div class="header" @mousedown="onMousedown($event)" @mouseup="onMouseup">
       <div class="left" @drag.prevent="onDrag">
         <div
           v-for="(app, i) in apps"
@@ -21,9 +22,9 @@
         </div>
       </div>
       <div class="operate">
-        <div class="min"></div>
-        <div class="normal" @click="resize"></div>
-        <div class="close" @click="closeAllPage"></div>
+        <div class="min" @click.stop="changeSmallWrapper('add', 'chrome')"></div>
+        <div class="normal" @click.stop="resize"></div>
+        <div class="close" @click.stop="closeAllPage"></div>
       </div>
     </div>
     <div
@@ -32,7 +33,7 @@
       v-for="(page, index) in webPage"
       :key="index"
     >
-      <div class="cover" v-if="mouseDown"></div>
+      <div class="cover" v-if="mouseDown || activeWrapper !== 'chrome'"></div>
       <iframe class="webpage" :src="page"></iframe>
     </div>
   </div>
@@ -40,7 +41,15 @@
 
 <script>
 export default {
-  props: ["apps", "clearApps", "closePageByIndex", "updateActive"],
+  props: [
+    "apps",
+    "clearApps",
+    "closePageByIndex",
+    "updateActive",
+    "activeWrapper",
+    "changeActiveWrapper",
+    "changeSmallWrapper",
+  ],
   data() {
     return {
       dataMap: {
@@ -82,10 +91,9 @@ export default {
         this.mouseDown = false;
         this.disX = 0;
         this.disY = 0;
-      }
+      };
     },
-    onMouseup() {
-    },
+    onMouseup() {},
     changeActive(index) {
       this.activeIndex = index;
     },
@@ -95,7 +103,6 @@ export default {
       // 如果删除了activeIndex，就要选出下一个
       // apps没有了就触发close
       if (this.activeIndex === index) {
-        console.log("activeIndex = index喔");
         if (this.apps.length === 1) {
           this.closeAllPage();
         } else {
@@ -108,7 +115,6 @@ export default {
         this.closePageByIndex(index);
         if (this.activeIndex > index) {
           this.changeActive(this.activeIndex - 1);
-          console.log("active>index");
         }
       }
     },
@@ -149,12 +155,15 @@ export default {
   top: 30px;
   // margin-left: -550px;
   transition: all 0.03s linear;
+  &.active{
+    z-index: 20;
+  }
   &.max {
     width: 100%;
     height: calc(100% - 80px);
     // height: 100%;
-    left: 0!important;
-    top: 0!important;
+    left: 0 !important;
+    top: 0 !important;
     margin-left: 0;
   }
   .header {
@@ -238,7 +247,7 @@ export default {
         display: inline-block;
         transition: all 0.2s ease;
         background-repeat: no-repeat;
-        background-size: 16px 16px;
+        background-size: 12px 12px;
         background-position: center center;
         &:hover {
           background-color: #ccc;
@@ -255,7 +264,7 @@ export default {
       height: 100%;
       box-sizing: border-box;
     }
-    .cover{
+    .cover {
       width: 100%;
       height: 100%;
       position: absolute;

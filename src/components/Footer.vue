@@ -1,6 +1,16 @@
 <template>
   <div class="footer">
     <div class="begin"></div>
+    <div class="left-content">
+      <div
+        :class="['bottom-icon', { active: i === bottomActive }]"
+        v-for="(icon, i) in iconUrl"
+        :key="i"
+        @click="clickBottom(icon.type, i)"
+      >
+        <img :src="icon.imgUrl" />
+      </div>
+    </div>
     <div class="right-content">
       <div class="time" @click.stop="changeCalendar">
         <span>{{ time }}</span>
@@ -12,12 +22,27 @@
 </template>
 <script>
 export default {
-  props: ["changeCalendar"],
+  props: ["changeCalendar", "bottomIcons", "bottomActive", "clickBottom"],
   data() {
     return {
       time: "12:00",
       date: "",
+      // 传入的格式和图标映射
+      dataMap: {
+        txt: require("../assets/记事本.png"),
+        chrome: require("../assets/Chrome.png"),
+      },
     };
+  },
+  computed: {
+    iconUrl() {
+      var temp = this.bottomIcons.map((icon) => {
+        if (this.dataMap[icon]) {
+          return { type: icon, imgUrl: this.dataMap[icon] };
+        }
+      });
+      return temp;
+    },
   },
   methods: {
     setTime() {
@@ -38,6 +63,7 @@ export default {
   },
   mounted() {
     this.setTime();
+    console.log(this.iconUrl);
   },
 };
 </script>
@@ -58,6 +84,32 @@ export default {
     &:hover {
       background: url("../assets/beginhover.png");
       background-position: 55px -6px;
+    }
+  }
+  .left-content {
+    position: absolute;
+    left: 50px;
+    right: 150px;
+    height: 40px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    .bottom-icon {
+      margin-right: 3px;
+      flex-basis: 24px;
+      padding: 6px 13px 8px 13px;
+      height: 24px;
+      border-bottom: 2px solid #008c8c;
+      > img {
+        width: 24px;
+        height: 24px;
+      }
+      &:hover {
+        background-color: #3c4b46;
+      }
+      &.active {
+        background-color: #2e574b;
+      }
     }
   }
   .right-content {

@@ -17,6 +17,8 @@ export default {
   box-sizing: border-box;
   padding: 3px 5px 0 5px;
   border-radius: 3px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   &.active {
     background: #aac;
   }

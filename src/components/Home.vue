@@ -33,14 +33,32 @@
     <transition name="app">
       <template v-if="apps.length !== 0">
         <Application
+          v-show="this.smallWrapper.indexOf('chrome') === -1"
           :apps="apps"
+          :changeActiveWrapper="changeActiveWrapper"
+          :activeWrapper="activeWrapper"
           :clearApps="clearApps"
           :closePageByIndex="closePage"
           :updateActive="updateActive"
+          :changeSmallWrapper="changeSmallWrapper"
         />
       </template>
     </transition>
-    <Footer :changeCalendar="rightCalendar" />
+    <transition name="app">
+      <template v-if="txt !== ''">
+        <Txt
+          v-show="this.smallWrapper.indexOf('txt') === -1"
+          :txt="txt"
+          :activeWrapper="activeWrapper"
+        />
+      </template>
+    </transition>
+    <Footer
+      :clickBottom="changeBottomActive"
+      :bottomActive="bottomActive"
+      :bottomIcons="bottomIcons"
+      :changeCalendar="rightCalendar"
+    />
   </div>
 </template>
 <script>
@@ -48,6 +66,7 @@ import Icon from "./Icon";
 import Footer from "./Footer";
 import Calendar from "./Calendar";
 import Application from "./Application";
+import Txt from "./Txt";
 
 export default {
   components: {
@@ -55,6 +74,7 @@ export default {
     Icon,
     Calendar,
     Application,
+    Txt,
   },
   data() {
     return {
@@ -83,20 +103,89 @@ export default {
       showCalendar: false,
 
       // 管理打开程序变量
-      // 双击点开的app
+      // 双击点开的webapp
       apps: [],
       // 给子组件监听，来修改active
       updateActive: false,
 
+      //已打开的txt文件名
+      txt: "",
+
       // 监听双击的监听器
       doubleClickListen: null,
+      // 底部的icon,用于最小化，txt,chrome
+      bottomIcons: [],
+      bottomActive: 0,
+      // 当前展示的最高窗口：chrome，txt
+      activeWrapper: "",
+      // 处于最小化状态的窗口：chrome, txt
+      smallWrapper: [],
     };
   },
   methods: {
+    // 点击展示内容，设置成activeWrapper
+    changeActiveWrapper(name) {
+      this.activeWrapper = name;
+      let index = this.bottomIcons.indexOf(name);
+      this.bottomActive = index;
+    },
+    // 处理最小化的内容
+    changeSmallWrapper(type, name) {
+      switch (type) {
+        case "delete":
+          var index = this.bottomIcons.indexOf(name);
+          this.bottomActive = index;
+          this.smallWrapper.splice(index, 1);
+          break;
+        case "add":
+          if (this.smallWrapper.indexOf(name) === -1) {
+            this.smallWrapper.push(name);
+          }
+          if (this.bottomActive === this.bottomIcons.indexOf(name)) {
+            this.bottomActive = -1;
+          }
+          break;
+      }
+    },
+    //点击底部icon
+    changeBottomActive(name, index) {
+      console.log(name);
+      console.log(this.smallWrapper);
+      if (!index) {
+        index = this.bottomIcons.indexOf(name);
+      }
+      // 判断如果small里面有了，就去除，否则增加
+      if(this.smallWrapper.indexOf(name) === -1){
+        this.changeSmallWrapper('add', name);
+      }else{
+        this.changeSmallWrapper('delete', name);
+      }
+
+      if (this.bottomActive === index) {
+        this.bottomActive = -1;
+        this.activeWrapper = "";
+        // // 往最小化数组中添加该项
+        // if (this.smallWrapper.indexOf(name) === -1) {
+        //   this.smallWrapper.push(name);
+        // }
+        return;
+      } else {
+        this.bottomActive = index;
+        this.activeWrapper = name;
+        // 往最小化数组中去除该项
+        // this.smallWrapper.splice(index, 1);
+      }
+    },
     // 清除apps
     clearApps() {
       this.apps = [];
       this.changeActive = 0;
+      var index = this.bottomIcons.indexOf("chrome");
+      this.bottomIcons.splice(index, 1);
+      if (this.activeWrapper === "chrome") {
+        this.activeWrapper = "";
+        this.bottomActive = -1;
+      }
     },
     closePage(index) {
       this.apps.splice(index, 1);
@@ -262,7 +351,7 @@ export default {
     // 处理拖拽图标事件的start
     handleDragStart(e) {
       // 打开窗口时禁止拖动
-      if(this.apps.length !== 0) {
+      if (this.apps.length !== 0) {
         alert("打开窗口时禁止拖动图标");
         return;
       }
@@ -395,17 +484,38 @@ export default {
         }, 500);
       }
     },
+    // 处理打开的文件的最小化和底部图标
+    handleShow(name) {
+      this.activeWrapper = name;
+      let index = this.bottomIcons.indexOf(name);
+      if (index === -1) {
+        this.bottomIcons.push(name);
+        this.bottomActive = this.bottomIcons.length - 1;
+      } else {
+        this.bottomActive = this.bottomIcons.indexOf(name);
+      }
+    },
     // 双击事件，窗口打开时禁止拖动图标
     doubleClick(icon) {
       // 如果不在setTimeout期间内再点击，则无法触发双击事件
       if (this.doubleClickListen) {
-        if(this.apps.length >= 11) {
-          alert("同时最多开启11个窗口");
-          return;
+        // 记事本文件
+        if (icon.title.includes(".txt")) {
+          this.txt = icon.title;
+          // 如果bottomIcon里有记事本，那就设为active
+          // 否则添加
+          this.handleShow('txt');
+        } else {
+          // app的是默认的
+          if (this.apps.length >= 11) {
+            alert("同时最多开启11个窗口");
+            return;
+          }
+          this.handleShow('chrome');
+          this.apps.push(icon);
+          // 双击更新的apps，提醒子组件来更新active
+          this.updateActive = !this.updateActive;
         }
-        this.apps.push(icon);
-        // 双击更新的apps，提醒子组件来更新active
-        this.updateActive = !this.updateActive;
       }
     },
   },
@@ -424,35 +534,17 @@ export default {
     // 初始数据
     var titles = [
       "我的电脑",
-      "回收站",
-      "项目文件",
-      "微信",
       "个人博客",
-      "英雄联盟",
-      "VUE",
-      "我的电脑",
-      "回收站",
       "项目文件",
-      "微信",
       "选课系统",
-      "英雄联盟",
-      "VUE",
+      "用户信息.txt",
     ];
     var imgUrls = [
       require("../assets/系统.png"),
-      require("../assets/回收站.png"),
-      require("../assets/文件夹.png"),
-      require("../assets/微信.png"),
       require("../assets/Chrome.png"),
-      require("../assets/英雄联盟.png"),
-      require("../assets/logo.png"),
-      require("../assets/系统.png"),
-      require("../assets/回收站.png"),
       require("../assets/文件夹.png"),
-      require("../assets/微信.png"),
       require("../assets/Chrome.png"),
-      require("../assets/英雄联盟.png"),
-      require("../assets/logo.png"),
+      require("../assets/记事本.png"),
     ];
     // 通过初始的数据渲染这个链表
     for (var i = 0; i < titles.length; i++) {
@@ -534,7 +626,7 @@ export default {
 }
 .app-enter-active,
 .app-leave-active {
-  transition: transform .2s linear;
+  transition: transform 0.2s linear;
 }
 
 .app-leave,
