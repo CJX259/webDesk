@@ -129,62 +129,87 @@ export default {
       let index = this.bottomIcons.indexOf(name);
       this.bottomActive = index;
     },
-    // 处理最小化的内容
+    // 处理最小化的内容,包含处理buttonActive和activeWrapper
     changeSmallWrapper(type, name) {
       switch (type) {
         case "delete":
           var index = this.bottomIcons.indexOf(name);
           this.bottomActive = index;
+          index = this.smallWrapper.indexOf(name);
           this.smallWrapper.splice(index, 1);
+          this.activeWrapper = name;
           break;
         case "add":
+          // 如果最小化没有，则添加进去
           if (this.smallWrapper.indexOf(name) === -1) {
             this.smallWrapper.push(name);
           }
+          // 如果最小化的是当前最高级，则把最高级换为第一个已打开应用中，非最小化的应用
           if (this.bottomActive === this.bottomIcons.indexOf(name)) {
             this.bottomActive = -1;
+            this.activeWrapper = "";
+            for (var i = 0; i < this.bottomIcons.length; i++) {
+              if (
+                this.bottomIcons[i] !== name &&
+                this.smallWrapper.indexOf(this.bottomIcons[i]) === -1
+              ) {
+                this.activeWrapper = this.bottomIcons[i];
+                this.bottomActive = i;
+                break;
+              }
+            }
           }
           break;
       }
     },
     //点击底部icon
     changeBottomActive(name, index) {
-      console.log(name);
-      console.log(this.smallWrapper);
       if (!index) {
         index = this.bottomIcons.indexOf(name);
       }
-      // 判断如果small里面有了，就去除，否则增加
-      if(this.smallWrapper.indexOf(name) === -1){
-        this.changeSmallWrapper('add', name);
-      }else{
-        this.changeSmallWrapper('delete', name);
-      }
-
-      if (this.bottomActive === index) {
-        this.bottomActive = -1;
-        this.activeWrapper = "";
-        // // 往最小化数组中添加该项
-        // if (this.smallWrapper.indexOf(name) === -1) {
-        //   this.smallWrapper.push(name);
-        // }
-        return;
+      // 判断如果small里面有了，就去除，否则再看是否为最高级，不是就变为最高级
+      if (this.smallWrapper.indexOf(name) === -1) {
+        // 是最高级，添加进最小化
+        if (this.activeWrapper === name) {
+          this.changeSmallWrapper("add", name);
+        } else {
+          // 不是当前的话，就变为最高级
+          this.activeWrapper = name;
+          this.bottomActive = this.bottomIcons.indexOf(name);
+        }
       } else {
-        this.bottomActive = index;
-        this.activeWrapper = name;
-        // 往最小化数组中去除该项
-        // this.smallWrapper.splice(index, 1);
+        this.changeSmallWrapper("delete", name);
       }
     },
     // 清除apps
     clearApps() {
       this.apps = [];
       this.changeActive = 0;
-      var index = this.bottomIcons.indexOf("chrome");
+      this.clearInBottomIcons('chrome');
+      console.log(this.bottomActive);
+    },
+    // 关闭应用，清除bottomIcons中相应数据（activeWrapper，bottomActive）
+    clearInBottomIcons(name) {
+      var index = this.bottomIcons.indexOf(name);
       this.bottomIcons.splice(index, 1);
-      if (this.activeWrapper === "chrome") {
-        this.activeWrapper = "";
+      if (this.activeWrapper === name) {
         this.bottomActive = -1;
+        this.activeWrapper = "";
+        for (var i = 0; i < this.bottomIcons.length; i++) {
+          if (
+            this.bottomIcons[i] !== name &&
+            this.smallWrapper.indexOf(this.bottomIcons[i]) === -1
+          ) {
+            this.activeWrapper = this.bottomIcons[i];
+            this.bottomActive = i;
+            break;
+          }
+        }
+      }else{
+        // 如果关闭的不是自己，且active大于自己，那么active退一位
+        if(this.bottomActive > index){
+          this.bottomActive--;
+        }
       }
     },
     closePage(index) {
@@ -504,14 +529,14 @@ export default {
           this.txt = icon.title;
           // 如果bottomIcon里有记事本，那就设为active
           // 否则添加
-          this.handleShow('txt');
+          this.handleShow("txt");
         } else {
           // app的是默认的
           if (this.apps.length >= 11) {
             alert("同时最多开启11个窗口");
             return;
           }
-          this.handleShow('chrome');
+          this.handleShow("chrome");
           this.apps.push(icon);
           // 双击更新的apps，提醒子组件来更新active
           this.updateActive = !this.updateActive;
