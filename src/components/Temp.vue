@@ -70,12 +70,20 @@ export default {
   },
   data() {
     return {
-      // dataMap: {
-      //   个人博客: "http://www.jessyblog.cn/jessy/index",
-      //   选课系统: "http://www.jessyblog.cn:8080",
-      // },
       dataMap: {
-        "用户信息.txt": "http://www.jessyblog.cn/jessy/index"
+        "用户信息.txt": `学生
+账号：1815200059
+密码：123123
+
+老师
+账号：t001
+密码：123123
+
+管理员
+账号：admin
+密码：123123`,
+        个人博客: "http://www.jessyblog.cn/jessy/index",
+        选课系统: "http://www.jessyblog.cn:8080",
       },
       activeIndex: 0,
       mouseDown: false,
@@ -162,9 +170,12 @@ export default {
   position: absolute;
   width: 1100px;
   height: 540px;
+  overflow: hidden;
   left: calc(50% - 550px);
   z-index: 10;
   top: 30px;
+  // border: 1px solid #000;
+  box-shadow: 1px 1px 3px 1px #000;
   // margin-left: -550px;
   transition: all 0.03s linear;
   &.active{
@@ -172,7 +183,7 @@ export default {
   }
   &.max {
     width: 100%;
-    height: calc(100% - 80px);
+    height: calc(100% - 40px);
     // height: 100%;
     left: 0 !important;
     top: 0 !important;
@@ -268,7 +279,7 @@ export default {
     }
   }
   .content {
-    height: 100%;
+    height: calc(100% - 40px);
     position: relative;
     .webpage {
       width: 100%;

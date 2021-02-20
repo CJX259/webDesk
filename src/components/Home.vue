@@ -30,10 +30,11 @@
         <Calendar />
       </template>
     </transition>
-    <transition name="app">
+    <transition-group name="app">
       <template v-if="apps.length !== 0">
-        <Application
-          v-show="this.smallWrapper.indexOf('chrome') === -1"
+        <Temp
+          key="app"
+          v-if="this.smallWrapper.indexOf('chrome') === -1"
           :apps="apps"
           :changeActiveWrapper="changeActiveWrapper"
           :activeWrapper="activeWrapper"
@@ -41,15 +42,19 @@
           :closePageByIndex="closePage"
           :updateActive="activeApp"
           :max="chromeMax"
+          name="chrome"
           :changeMax="changeMax"
           :changeSmallWrapper="changeSmallWrapper"
-        />
+        >
+          <template v-slot:default="pageData">
+            <iframe class="webpage" :src="pageData.data"></iframe>
+          </template>
+        </Temp>
       </template>
-    </transition>
-    <transition name="app">
       <template v-if="txts.length !== 0">
         <Temp
-          v-show="this.smallWrapper.indexOf('txt') === -1"
+          key="txt"
+          v-if="this.smallWrapper.indexOf('txt') === -1"
           :apps="txts"
           :changeActiveWrapper="changeActiveWrapper"
           :activeWrapper="activeWrapper"
@@ -62,13 +67,11 @@
           :changeSmallWrapper="changeSmallWrapper"
         >
           <template v-slot:default="pageData">
-            <!-- <iframe class="webpage" :src="pageData.data"></iframe> -->
-            <!-- {{ pageData.data }} -->
             <textarea class="txt" :value="pageData.data" />
           </template>
         </Temp>
       </template>
-    </transition>
+    </transition-group>
     <Footer
       :clickBottom="changeBottomActive"
       :bottomActive="bottomActive"
@@ -81,8 +84,6 @@
 import Icon from "./Icon";
 import Footer from "./Footer";
 import Calendar from "./Calendar";
-import Application from "./Application";
-// import Txt from "./Txt";
 import Temp from "./Temp";
 
 export default {
@@ -90,9 +91,7 @@ export default {
     Footer,
     Icon,
     Calendar,
-    Application,
     Temp,
-    // Txt,
   },
   data() {
     return {
@@ -157,7 +156,9 @@ export default {
           var index = this.bottomIcons.indexOf(name);
           this.bottomActive = index;
           index = this.smallWrapper.indexOf(name);
-          this.smallWrapper.splice(index, 1);
+          if(index != -1){
+            this.smallWrapper.splice(index, 1);
+          }
           this.activeWrapper = name;
           break;
         case "add":
@@ -204,11 +205,11 @@ export default {
     },
     // 清除apps
     clearApps(name) {
-      switch(name){
-        case 'chrome': 
+      switch (name) {
+        case "chrome":
           this.apps = [];
           break;
-        case 'txt' :
+        case "txt":
           this.txts = [];
       }
       // this.changeActive = 0;
@@ -242,11 +243,11 @@ export default {
       }
     },
     closePage(index, name) {
-      switch(name){
-        case 'txt': 
+      switch (name) {
+        case "txt":
           this.txts.splice(index, 1);
           break;
-        case 'chrome':
+        case "chrome":
           this.apps.splice(index, 1);
           break;
       }
@@ -545,7 +546,7 @@ export default {
         }, 500);
       }
     },
-    // 处理打开的文件的最小化和底部图标
+    // 处理打开的文件的最小化和底部图标,还要从最小化中去除
     handleShow(name) {
       this.activeWrapper = name;
       let index = this.bottomIcons.indexOf(name);
@@ -554,6 +555,10 @@ export default {
         this.bottomActive = this.bottomIcons.length - 1;
       } else {
         this.bottomActive = this.bottomIcons.indexOf(name);
+        // 从最小化中去除
+        this.changeSmallWrapper("delete", name);
+        console.log("从small中去除"+name);
+        console.log("small",this.smallWrapper);
       }
     },
     // 双击事件，窗口打开时禁止拖动图标
