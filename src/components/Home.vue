@@ -39,18 +39,34 @@
           :activeWrapper="activeWrapper"
           :clearApps="clearApps"
           :closePageByIndex="closePage"
-          :updateActive="updateActive"
+          :updateActive="activeApp"
+          :max="chromeMax"
+          :changeMax="changeMax"
           :changeSmallWrapper="changeSmallWrapper"
         />
       </template>
     </transition>
     <transition name="app">
-      <template v-if="txt !== ''">
-        <Txt
+      <template v-if="txts.length !== 0">
+        <Temp
           v-show="this.smallWrapper.indexOf('txt') === -1"
-          :txt="txt"
+          :apps="txts"
+          :changeActiveWrapper="changeActiveWrapper"
           :activeWrapper="activeWrapper"
-        />
+          :clearApps="clearApps"
+          :closePageByIndex="closePage"
+          :updateActive="activeTxt"
+          :max="txtMax"
+          :changeMax="changeMax"
+          name="txt"
+          :changeSmallWrapper="changeSmallWrapper"
+        >
+          <template v-slot:default="pageData">
+            <!-- <iframe class="webpage" :src="pageData.data"></iframe> -->
+            <!-- {{ pageData.data }} -->
+            <textarea class="txt" :value="pageData.data" />
+          </template>
+        </Temp>
       </template>
     </transition>
     <Footer
@@ -66,7 +82,8 @@ import Icon from "./Icon";
 import Footer from "./Footer";
 import Calendar from "./Calendar";
 import Application from "./Application";
-import Txt from "./Txt";
+// import Txt from "./Txt";
+import Temp from "./Temp";
 
 export default {
   components: {
@@ -74,7 +91,8 @@ export default {
     Icon,
     Calendar,
     Application,
-    Txt,
+    Temp,
+    // Txt,
   },
   data() {
     return {
@@ -106,10 +124,13 @@ export default {
       // 双击点开的webapp
       apps: [],
       // 给子组件监听，来修改active
-      updateActive: false,
+      activeApp: false,
+      chromeMax: false,
 
       //已打开的txt文件名
-      txt: "",
+      txts: [],
+      activeTxt: false,
+      txtMax: false,
 
       // 监听双击的监听器
       doubleClickListen: null,
@@ -182,11 +203,19 @@ export default {
       }
     },
     // 清除apps
-    clearApps() {
-      this.apps = [];
-      this.changeActive = 0;
-      this.clearInBottomIcons('chrome');
-      console.log(this.bottomActive);
+    clearApps(name) {
+      switch(name){
+        case 'chrome': 
+          this.apps = [];
+          break;
+        case 'txt' :
+          this.txts = [];
+      }
+      // this.changeActive = 0;
+      this.clearInBottomIcons(name);
+    },
+    changeMax(flag, name) {
+      this[name + "Max"] = flag;
     },
     // 关闭应用，清除bottomIcons中相应数据（activeWrapper，bottomActive）
     clearInBottomIcons(name) {
@@ -205,15 +234,22 @@ export default {
             break;
           }
         }
-      }else{
+      } else {
         // 如果关闭的不是自己，且active大于自己，那么active退一位
-        if(this.bottomActive > index){
+        if (this.bottomActive > index) {
           this.bottomActive--;
         }
       }
     },
-    closePage(index) {
-      this.apps.splice(index, 1);
+    closePage(index, name) {
+      switch(name){
+        case 'txt': 
+          this.txts.splice(index, 1);
+          break;
+        case 'chrome':
+          this.apps.splice(index, 1);
+          break;
+      }
     },
     // 改变日历展示
     // 点击右下角
@@ -376,8 +412,8 @@ export default {
     // 处理拖拽图标事件的start
     handleDragStart(e) {
       // 打开窗口时禁止拖动
-      if (this.apps.length !== 0) {
-        alert("打开窗口时禁止拖动图标");
+      if (this.apps.length !== 0 || this.txts.length !== 0) {
+        alert("存在窗口时禁止拖动图标");
         return;
       }
       var x = 1;
@@ -525,22 +561,26 @@ export default {
       // 如果不在setTimeout期间内再点击，则无法触发双击事件
       if (this.doubleClickListen) {
         // 记事本文件
+        var type = "";
+        var arr = "";
+        var active = "";
         if (icon.title.includes(".txt")) {
-          this.txt = icon.title;
-          // 如果bottomIcon里有记事本，那就设为active
-          // 否则添加
-          this.handleShow("txt");
+          type = "txt";
+          active = "Txt";
+          arr = "txts";
         } else {
           // app的是默认的
-          if (this.apps.length >= 11) {
-            alert("同时最多开启11个窗口");
-            return;
-          }
-          this.handleShow("chrome");
-          this.apps.push(icon);
-          // 双击更新的apps，提醒子组件来更新active
-          this.updateActive = !this.updateActive;
+          type = "chrome";
+          arr = "apps";
+          active = "App";
         }
+        if (this[arr].length >= 11) {
+          alert("同时最多开启11个窗口");
+          return;
+        }
+        this.handleShow(type);
+        this[arr].push(icon);
+        this["active" + active] = !this["active" + active];
       }
     },
   },
