@@ -19,6 +19,7 @@ export default {
   border-radius: 3px;
   text-overflow: ellipsis;
   white-space: nowrap;
+  user-select: none;
   &.active {
     background: #aac;
   }

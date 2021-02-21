@@ -240,6 +240,7 @@ export default Vue.extend({
 <style lang="less" scoped>
 .calendar {
   width: 400px;
+  user-select: none;
   background-color: #1c3d32;
   height: 520px;
   position: absolute;

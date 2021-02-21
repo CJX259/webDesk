@@ -1,11 +1,11 @@
 <template>
   <div
     class="application-wrapper"
-    :class="{ active: this.activeWrapper == name, max: this.max }"
-    @click="changeActiveWrapper(name)"
-    :ref="wrapperRefName"
+    :class="{ active: this.activeWrapper == 'chrome', max: this.max }"
+    @click="changeActiveWrapper('chrome')"
+    ref="appWrapper"
   >
-    <div class="header" @dblclick="changeMax(!max, name)" @mousedown="onMousedown($event)" @mouseup="onMouseup">
+    <div class="header" @dblclick="changeMax(!max, 'chrome')" @mousedown="onMousedown($event)" @mouseup="onMouseup">
       <div class="left" @drag.prevent="onDrag">
         <div
           v-for="(app, i) in apps"
@@ -22,22 +22,19 @@
         </div>
       </div>
       <div class="operate">
-        <div class="min" @click.stop="changeSmallWrapper('add', name)"></div>
-        <div class="normal" @click="changeMax(!max, name)"></div>
+        <div class="min" @click.stop="changeSmallWrapper('add', 'chrome')"></div>
+        <div class="normal" @click="changeMax(!max, 'chrome')"></div>
         <div class="close" @click.stop="closeAllPage"></div>
       </div>
     </div>
     <div
       class="content"
       v-show="index === activeIndex"
-      v-for="(data, index) in renderData"
+      v-for="(page, index) in webPage"
       :key="index"
     >
-      <div class="cover" v-if="mouseDown || activeWrapper !== name"></div>
-      <!-- <iframe class="webpage" :src="data"></iframe> -->
-      <div class="webpage">
-        <slot :data="data"></slot>
-      </div>
+      <div class="cover" v-if="mouseDown || activeWrapper !== 'chrome'"></div>
+      <iframe class="webpage" :src="page"></iframe>
     </div>
   </div>
 </template>
@@ -53,35 +50,11 @@ export default {
     "changeActiveWrapper",
     "changeSmallWrapper",
     "max",
-    "changeMax",
-    // name是打开的格式（chrome, txt）
-    "name"
+    "changeMax"
   ],
-  computed:{
-    wrapperRefName(){
-      return this.name + 'Wrapper';
-    },
-    renderData() {
-      let render = this.apps.map((app) => {
-        return this.dataMap[app.title] ? this.dataMap[app.title] : "";
-      });
-      return render;
-    },
-  },
   data() {
     return {
       dataMap: {
-        "用户信息.txt": `学生
-账号：1815200059
-密码：123123
-
-老师
-账号：t001
-密码：123123
-
-管理员
-账号：admin
-密码：123123`,
         个人博客: "http://www.jessyblog.cn/jessy/index",
         选课系统: "http://www.jessyblog.cn:8080",
       },
@@ -103,11 +76,11 @@ export default {
     onDrag() {},
     onMousedown(e) {
       this.mouseDown = true;
-      this.disX = e.pageX - this.$refs[this.wrapperRefName].getClientRects()[0].left;
-      this.disY = e.pageY - this.$refs[this.wrapperRefName].getClientRects()[0].top;
+      this.disX = e.pageX - this.$refs.appWrapper.getClientRects()[0].left;
+      this.disY = e.pageY - this.$refs.appWrapper.getClientRects()[0].top;
       // 给document注册move事件
       document.onmousemove = (e) => {
-        const appWrapperDom = this.$refs[this.wrapperRefName];
+        const appWrapperDom = this.$refs.appWrapper;
         if (!this.mouseDown || appWrapperDom.className.includes("max")) {
           return;
         }
@@ -136,12 +109,12 @@ export default {
           this.closeAllPage();
         } else {
           // this.activeIndex = this.activeIndex - 1;
-          this.closePageByIndex(index, this.name);
+          this.closePageByIndex(index);
           this.activeIndex === 0 ? "" : this.changeActive(this.activeIndex - 1);
         }
       } else {
         // 如果删除的不是activeIndex,就直接在数组中删除index;
-        this.closePageByIndex(index, this.name);
+        this.closePageByIndex(index);
         if (this.activeIndex > index) {
           this.changeActive(this.activeIndex - 1);
         }
@@ -149,19 +122,28 @@ export default {
     },
     // 关闭所有网页标签
     closeAllPage() {
-      this.clearApps(this.name);
+      this.clearApps('chrome');
       this.activeIndex = 0;
     },
     // 最大化或正常
     resize() {
-      if (this.$refs[this.wrapperRefName].className.includes("max")) {
-        this.$refs[this.wrapperRefName].setAttribute("class", "application-wrapper");
+      if (this.$refs.appWrapper.className.includes("max")) {
+        this.$refs.appWrapper.setAttribute("class", "application-wrapper");
       } else {
-        this.$refs[this.wrapperRefName].setAttribute("class", "max application-wrapper");
+        this.$refs.appWrapper.setAttribute("class", "max application-wrapper");
       }
       // console.log(this.$refs.appWrapper.classList) ;
     },
   },
+  computed: {
+    webPage() {
+      let pageUrl = this.apps.map((app) => {
+        return this.dataMap[app.title] ? this.dataMap[app.title] : "";
+      });
+      return pageUrl;
+    },
+  },
+  created() {},
 };
 </script>
 
@@ -170,12 +152,9 @@ export default {
   position: absolute;
   width: 1100px;
   height: 540px;
-  overflow: hidden;
   left: calc(50% - 550px);
   z-index: 10;
   top: 30px;
-  // border: 1px solid #000;
-  box-shadow: 1px 1px 3px 1px #000;
   // margin-left: -550px;
   transition: all 0.03s linear;
   &.active{
@@ -183,7 +162,7 @@ export default {
   }
   &.max {
     width: 100%;
-    height: calc(100% - 40px);
+    height: calc(100% - 80px);
     // height: 100%;
     left: 0 !important;
     top: 0 !important;
@@ -279,24 +258,13 @@ export default {
     }
   }
   .content {
-    height: calc(100% - 40px);
+    height: 100%;
     position: relative;
     .webpage {
       width: 100%;
       // height: 600px;
       height: 100%;
       box-sizing: border-box;
-      background-color: #eee;
-      >textarea{
-        width: 100%;
-        border: none;
-        line-height: 20px;
-        height: 100%;
-        resize:none;
-        box-sizing: border-box;
-        padding: 10px;
-        outline: none;
-      }
     }
     .cover {
       width: 100%;

@@ -32,7 +32,7 @@
     </transition>
     <transition-group name="app">
       <template v-if="apps.length !== 0">
-        <Temp
+        <Application
           key="app"
           v-if="this.smallWrapper.indexOf('chrome') === -1"
           :apps="apps"
@@ -49,10 +49,10 @@
           <template v-slot:default="pageData">
             <iframe class="webpage" :src="pageData.data"></iframe>
           </template>
-        </Temp>
+        </Application>
       </template>
       <template v-if="txts.length !== 0">
-        <Temp
+        <Application
           key="txt"
           v-if="this.smallWrapper.indexOf('txt') === -1"
           :apps="txts"
@@ -67,9 +67,9 @@
           :changeSmallWrapper="changeSmallWrapper"
         >
           <template v-slot:default="pageData">
-            <textarea class="txt" :value="pageData.data" />
+            <textarea @keydown.prevent.ctrl="handleKeyDown($event, pageData)" class="txt" :value="pageData.data" />
           </template>
-        </Temp>
+        </Application>
       </template>
     </transition-group>
     <Footer
@@ -84,14 +84,14 @@
 import Icon from "./Icon";
 import Footer from "./Footer";
 import Calendar from "./Calendar";
-import Temp from "./Temp";
+import Application from "./Application";
 
 export default {
   components: {
     Footer,
     Icon,
     Calendar,
-    Temp,
+    Application,
   },
   data() {
     return {
@@ -143,6 +143,12 @@ export default {
     };
   },
   methods: {
+    handleKeyDown(e, pageData){
+      console.log(pageData);
+      if(e.keyCode == 83){
+        console.log(111);
+      }
+    },
     // 点击展示内容，设置成activeWrapper
     changeActiveWrapper(name) {
       this.activeWrapper = name;

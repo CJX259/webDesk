@@ -102,6 +102,7 @@ export default {
       border-bottom: 2px solid #008c8c;
       > img {
         width: 24px;
+        user-select: none;
         height: 24px;
       }
       &:hover {
