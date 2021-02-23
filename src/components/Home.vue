@@ -43,6 +43,7 @@
           :updateActive="activeApp"
           :max="chromeMax"
           name="chrome"
+          :iconsData="iconsData.filter(item=>item.type === 'chrome')"
           :changeMax="changeMax"
           :changeSmallWrapper="changeSmallWrapper"
         >
@@ -64,6 +65,7 @@
           :max="txtMax"
           :changeMax="changeMax"
           name="txt"
+          :iconsData="iconsData.filter(item=>item.type === 'txt')"
           :changeSmallWrapper="changeSmallWrapper"
         >
           <template v-slot:default="pageData">
@@ -81,6 +83,7 @@
   </div>
 </template>
 <script>
+import axios from 'axios';
 import Icon from "./Icon";
 import Footer from "./Footer";
 import Calendar from "./Calendar";
@@ -140,9 +143,14 @@ export default {
       activeWrapper: "",
       // 处于最小化状态的窗口：chrome, txt
       smallWrapper: [],
+
+      // 数据库中的icon数据
+      iconsData: [],
+
     };
   },
   methods: {
+    // 处理txt文本的保存
     handleKeyDown(e, pageData){
       console.log(pageData);
       if(e.keyCode == 83){
@@ -595,7 +603,7 @@ export default {
       }
     },
   },
-  mounted() {
+  async mounted() {
     this.init();
     //创建链表结构
     class NodeList {
@@ -608,29 +616,46 @@ export default {
     var iconNode = new NodeList();
     this.home = iconNode;
     // 初始数据
-    var titles = [
-      "我的电脑",
-      "个人博客",
-      "项目文件",
-      "选课系统",
-      "用户信息.txt",
-    ];
+    // 需要修改，titles作为icons存储在数据库中
+    // imgUrls作为vue的数据存在data中
+    // init函数执行时，查数据库，拿到icons数组，icon有type属性，根据不同的type属性，分配不同的img
+    // 上传操作时，传入icon的数据以及对应的address分别存入不同的表，再重新render一下即可
+    let resp = await axios.get('/api/icon/geticon');
+    if(resp.status === 200){
+      this.iconsData = resp.data.data;
+    }
+    // var this.iconsData = [
+    //   "我的电脑",
+    //   "个人博客",
+    //   "项目文件",
+    //   "选课系统",
+    //   "用户信息.txt",
+    // ];
     var imgUrls = [
-      require("../assets/系统.png"),
-      require("../assets/Chrome.png"),
-      require("../assets/文件夹.png"),
-      require("../assets/Chrome.png"),
-      require("../assets/记事本.png"),
-    ];
-    // 通过初始的数据渲染这个链表
-    for (var i = 0; i < titles.length; i++) {
-      if (!titles[i] || !imgUrls[i]) {
-        throw new Error("标题与图标数据不匹配");
+      {
+        name : 'chrome',
+        img : require("../assets/Chrome.png")
+      },
+      {
+        name : "txt",
+        img: require("../assets/记事本.png")
       }
-      iconNode.title = titles[i];
-      iconNode.img = imgUrls[i];
-      if (i == titles.length - 1) {
-        // 最后一次
+    ];
+    // var imgUrls = [
+    //   require('imgUrl')
+    // ]
+    // 通过初始的数据渲染这个链表
+    for(var i = 0; i < this.iconsData.length; i++){
+      iconNode.title = this.iconsData[i].name;
+      // iconNode.img = imgUrls.filter(item=>item.name === this.iconsData[i].type)[0].img;
+      var imgUrl = imgUrls.filter(item=> item.name === this.iconsData[i].type);
+      if(imgUrl.length<=0){
+        throw new Error("缺少图片类型：" + this.iconsData[i].type);
+      }else{
+        iconNode.img = imgUrl[0].img;
+      }
+      // 最后一次
+      if(i === this.iconsData.length - 1){
         iconNode.next = null;
         break;
       }

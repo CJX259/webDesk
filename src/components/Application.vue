@@ -44,6 +44,7 @@
 </template>
 
 <script>
+import axios from 'axios';
 export default {
   props: [
     "apps",
@@ -56,13 +57,15 @@ export default {
     "max",
     "changeMax",
     // name是打开的格式（chrome, txt）
-    "name"
+    "name",
+    "iconsData"
   ],
   computed:{
     wrapperRefName(){
       return this.name + 'Wrapper';
     },
     renderData() {
+      console.log(this.dataMap);
       let render = this.apps.map((app) => {
         return this.dataMap[app.title] ? this.dataMap[app.title] : "";
       });
@@ -71,21 +74,7 @@ export default {
   },
   data() {
     return {
-      dataMap: {
-        "用户信息.txt": `学生
-账号：1815200059
-密码：123123
-
-老师
-账号：t001
-密码：123123
-
-管理员
-账号：admin
-密码：123123`,
-        个人博客: "http://www.jessyblog.cn/jessy/index",
-        选课系统: "http://www.jessyblog.cn:8080",
-      },
+      dataMap: {},
       activeIndex: 0,
       mouseDown: false,
       // 处理拖拽事件
@@ -163,6 +152,33 @@ export default {
       // console.log(this.$refs.appWrapper.classList) ;
     },
   },
+  async created(){
+    // let resp;
+    if(this.name === 'txt'){
+      // txt,则遍历所有iconsData，请求read对应名字的文件，保存在data中
+      this.iconsData.forEach(async icon=>{
+        const resp = await axios.get("/api/txt/read", {
+          params:{
+            filename: icon.name,
+          }
+        });
+        if(resp.status === 200){
+          // 给dataMap新设置的属性设置响应式
+          this.$set(this.dataMap, icon.name, resp.data.data.msg);
+        }
+      })
+    }else if(this.name === 'chrome'){
+      // 不用一个个拿
+      const resp = await axios.get('/api/project/getmap');
+      if(resp.status === 200){
+        resp.data.data.forEach(item=>{
+          this.$set(this.dataMap, item.name, item.address);
+        })
+      }
+    }
+    // console.log(this.dataMap);
+
+  }
 };
 </script>
 

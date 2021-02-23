@@ -55,3 +55,7 @@ slot里面给出是渲染的第几个，home组件中在对应文件的arr数组
 问题原因：拖动网页窗口时，需要给document注册mousemove事件（优化用户体验），但由于网页是通过iframe实现的，当鼠标移动到iframe上面时，出了document的范围，无法触发mousemove事件，导致出现问题。
 解决的方法：当点击时，用一个div覆盖住iframe
 
+5.在Application组件中（用于处理双击后打开的新窗口），根据数据给dataMap对象设置数据时，computed无法获得新设置的内容
+原因：dataMap为对象，新添加属性的话需要手动调用this.$set来给其添加响应式
+
+
