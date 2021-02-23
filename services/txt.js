@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const Icon = require('../models/icon');
 const basePath = path.resolve(__dirname, "../public");
-
+const { txtType } = require('../utils/value');
 module.exports.readTxt = async function (filename) {
   const check = checkFilename(filename);
   if (check.err) {
@@ -13,8 +13,8 @@ module.exports.readTxt = async function (filename) {
       encoding: 'utf-8'
     });
     return {
-      err : false,
-      msg : resp
+      err: false,
+      msg: resp
     };
   } catch (err) {
     return {
@@ -38,10 +38,10 @@ module.exports.openFile = async function (filename) {
         encoding: 'utf-8',
       });
       // 往数据库中添加数据
-      await Icon.create({name: filename, type:"txt"})
+      await Icon.create({ name: filename, type: txtType })
       return {
         err: false,
-        msg : "创建成功"
+        msg: "创建成功"
       };
     } catch (error) {
       return {
@@ -67,21 +67,38 @@ module.exports.writeFile = async function (filename, content) {
   if (resp.err) {
     // 文件不存在
     return {
-      err : true,
+      err: true,
       msg: "文件不存在"
     }
-    
-  }else{
+
+  } else {
     resp = fs.writeFileSync(path.resolve(basePath, filename), content, {
       encoding: 'utf-8'
     });
     return {
-      err : false,
+      err: false,
       msg: "写入成功"
     }
   }
 }
-
+module.exports.deleteFile = async function (filename){
+  const check = checkFilename(filename);
+  if(check.err){
+    return check;
+  }
+  try{
+    let resp = await fs.unlinkSync(path.resolve(basePath, filename));
+    return {
+      err: false,
+      msg: resp,
+    }
+  }catch(error){
+    return{
+      err: true,
+      msg : error
+    }
+  }
+}
 //检查filename参数
 function checkFilename(filename) {
   if (!filename) {
@@ -90,7 +107,7 @@ function checkFilename(filename) {
       msg: "缺少文件名"
     }
   }
-  if (!filename.includes('.txt')) {
+  if (!filename.includes(txtType)) {
     return {
       err: true,
       msg: "缺少.txt"

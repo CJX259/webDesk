@@ -1,4 +1,3 @@
-const e = require('express');
 const express = require('express');
 const txtSer = require('../../services/txt');
 const router = express.Router();
@@ -27,4 +26,6 @@ router.post('/write', asyncHandler(async (req, res) =>{
   }
   return resp;   
 }))
+
+// router.get('/delete', )
 module.exports = router;

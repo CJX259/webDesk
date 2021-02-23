@@ -12,6 +12,7 @@ app.use(express.static(staticPath));
 
 app.use("/api/project", require("./api/project"));
 app.use("/api/txt", require('./api/txt'));
+app.use("/api/icon", require('./api/icon'));
 
 // 错误处理中间件
 app.use(require("../utils/errMiddleware"));
