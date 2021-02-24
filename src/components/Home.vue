@@ -356,6 +356,12 @@ export default {
       while (e.clientY >= y * iconHeight + 5) {
         y++;
       }
+      // 拖动到原本的位置，不变，且恢复dragIconIndex
+      if (this.dragIconIndex.x === x - 1 && this.dragIconIndex.y === y - 1) {
+        console.log("不处理");
+        this.dragIconIndex = null;
+        return;
+      }
       // 判断是否拉到最后一个节点后面
       var lastFlag =
         this.icons[x - 1][y - 1] && this.icons[x - 1][y - 1].title == "";
