@@ -4,7 +4,7 @@ const port = 82;
 const app = express();
 const staticPath = path.resolve(__dirname, "../public");
 
-// app.use(express.json());
+app.use(express.json());
 // 用于解析post的body
 app.use(express.urlencoded({ extended: false }));
 
