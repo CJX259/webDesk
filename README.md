@@ -28,7 +28,7 @@
 打开 txt 文件的设计：
 利用 textarea 作为记事本修改和展示内容
 
-slot 里面给出是渲染的第几个，home 组件中在对应文件的 arr 数组中拿出对应位的 title，再在 home 中发送请求拿到对应的值，再进行渲染
+slot 里面给出是渲染的数据，home 组件中再进行绑定值渲染（）
 
 其中实现页面选择和删除遇到的问题和解决过程：
 
@@ -64,3 +64,8 @@ slot 里面给出是渲染的第几个，home 组件中在对应文件的 arr �
 正确写法：`<textarea @keydown.ctrl.prevent="handleKeyDown($event, data)" class="txt" v-model="data.content" />`
 意为：只有按下ctrl触发的keydown事件才阻止默认行为
 所以只有按下ctrl+某些键的时候，才不会触发input事件
+
+7.在Home组件中执行某些需要权限的操作（如写文件）时，需要login，而在login阶段，Home中写文件操作需要等待login结束后，才能判断能否允许写入。
+解决方法：利用Promise实现等待。
+操作login的函数返回一个promise对象，然后把resolve传入给login组件，当成功时，调用resolve(1),当失败时调用resolve(0)
+Home中调用该操作login函数时，利用await等待其返回值，并判断，即可实现需求。

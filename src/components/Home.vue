@@ -43,7 +43,7 @@
           :updateActive="activeApp"
           :max="chromeMax"
           name="chrome"
-          :iconsData="iconsData.filter(item=>item.type === 'chrome')"
+          :iconsData="iconsData.filter((item) => item.type === 'chrome')"
           :changeMax="changeMax"
           :changeSmallWrapper="changeSmallWrapper"
         >
@@ -65,13 +65,18 @@
           :max="txtMax"
           :changeMax="changeMax"
           name="txt"
-          :showLogin="changeNeedLogin"
-          :iconsData="iconsData.filter(item=>item.type === 'txt')"
+          :needInit="applicationInit"
+          :iconsData="iconsData.filter((item) => item.type === 'txt')"
           :changeSmallWrapper="changeSmallWrapper"
         >
-          <!-- <template v-slot:default="pageData">
-            <textarea @keydown.prevent.ctrl="handleKeyDown($event, pageData)" class="txt" :value="pageData.data.content" />
-          </template> -->
+          <template v-slot:default="pageData">
+            <textarea
+              @keydown.ctrl.prevent="handleKeyDown($event, pageData.data)"
+              class="txt"
+              v-model="pageData.data.content"
+              autofocus="autofocus"
+            />
+          </template>
         </Application>
       </template>
     </transition-group>
@@ -87,12 +92,12 @@
   </div>
 </template>
 <script>
-import axios from 'axios';
+import axios from "axios";
 import Icon from "./Icon";
 import Footer from "./Footer";
 import Calendar from "./Calendar";
 import Application from "./Application";
-import Login from './Login';
+import Login from "./Login";
 
 export default {
   components: {
@@ -152,20 +157,65 @@ export default {
 
       // 数据库中的icon数据
       iconsData: [],
-
+      //展示login
       needLogin: false,
-      loginResolve: ""
-
+      // login结束调用的resolve，传1为正确，0为错误
+      loginResolve: "",
+      // 重新请求application的远程数据：dataMap等
+      applicationInit: false,
     };
   },
   methods: {
-    // 展示login组件
-    changeNeedLogin(flag){
+    // 判断有没有登录过
+    isLogin() {
+      if (sessionStorage.getItem("login")) {
+        return true;
+      } else {
+        return false;
+      }
+    },
+    // 处理txt文本的保存
+    async handleKeyDown(e, data) {
+      if (e.keyCode == 83) {
+        // 登陆验证
+        if (!this.isLogin()) {
+          const resp = await this.changeNeedLogin(true);
+          if (resp) {
+            this.changeNeedLogin(false);
+            this.writeFile(data);
+          } else {
+            alert("密码错误，无权修改");
+          }
+          this.changeNeedLogin(false);
+        } else {
+          this.writeFile(data);
+        }
+      }
+    },
+    // 调用，写文件
+    async writeFile(data) {
+      const resp = await axios.post("/api/txt/write", {
+        content: data.content,
+        filename: data.name,
+      });
+      if (!resp.data.data.err) {
+        // 写入成功,重新请求数据
+        this.applicationInit = !this.applicationInit;
+        alert(resp.data.data.msg);
+      } else {
+        alert(resp.data.data.msg);
+      }
+    },
+    // 展示login组件，但需要login时，会返回一个promise对象
+    // 调用此函数的地方可以使用await等待登录的结果
+    // 返回1则是密码正确，返回0是密码错误
+    // 若传false则不会返回promise（隐藏login，所以不用等待）
+    changeNeedLogin(flag) {
       this.needLogin = flag;
-      if(!flag) return;
-      return new Promise((resolve)=>{
+      if (!flag) return;
+      return new Promise((resolve) => {
         this.loginResolve = resolve;
-      })
+      });
     },
     // 点击展示内容，设置成activeWrapper
     changeActiveWrapper(name) {
@@ -180,7 +230,7 @@ export default {
           var index = this.bottomIcons.indexOf(name);
           this.bottomActive = index;
           index = this.smallWrapper.indexOf(name);
-          if(index != -1){
+          if (index != -1) {
             this.smallWrapper.splice(index, 1);
           }
           this.activeWrapper = name;
@@ -581,8 +631,8 @@ export default {
         this.bottomActive = this.bottomIcons.indexOf(name);
         // 从最小化中去除
         this.changeSmallWrapper("delete", name);
-        console.log("从small中去除"+name);
-        console.log("small",this.smallWrapper);
+        console.log("从small中去除" + name);
+        console.log("small", this.smallWrapper);
       }
     },
     // 双击事件，窗口打开时禁止拖动图标
@@ -630,8 +680,8 @@ export default {
     // imgUrls作为vue的数据存在data中
     // init函数执行时，查数据库，拿到icons数组，icon有type属性，根据不同的type属性，分配不同的img
     // 上传操作时，传入icon的数据以及对应的address分别存入不同的表，再重新render一下即可
-    let resp = await axios.get('/api/icon/geticon');
-    if(resp.status === 200){
+    let resp = await axios.get("/api/icon/geticon");
+    if (resp.status === 200) {
       this.iconsData = resp.data.data;
     }
     // var this.iconsData = [
@@ -643,29 +693,31 @@ export default {
     // ];
     var imgUrls = [
       {
-        name : 'chrome',
-        img : require("../assets/Chrome.png")
+        name: "chrome",
+        img: require("../assets/Chrome.png"),
       },
       {
-        name : "txt",
-        img: require("../assets/记事本.png")
-      }
+        name: "txt",
+        img: require("../assets/记事本.png"),
+      },
     ];
     // var imgUrls = [
     //   require('imgUrl')
     // ]
     // 通过初始的数据渲染这个链表
-    for(var i = 0; i < this.iconsData.length; i++){
+    for (var i = 0; i < this.iconsData.length; i++) {
       iconNode.title = this.iconsData[i].name;
       // iconNode.img = imgUrls.filter(item=>item.name === this.iconsData[i].type)[0].img;
-      var imgUrl = imgUrls.filter(item=> item.name === this.iconsData[i].type);
-      if(imgUrl.length<=0){
+      var imgUrl = imgUrls.filter(
+        (item) => item.name === this.iconsData[i].type
+      );
+      if (imgUrl.length <= 0) {
         throw new Error("缺少图片类型：" + this.iconsData[i].type);
-      }else{
+      } else {
         iconNode.img = imgUrl[0].img;
       }
       // 最后一次
-      if(i === this.iconsData.length - 1){
+      if (i === this.iconsData.length - 1) {
         iconNode.next = null;
         break;
       }
