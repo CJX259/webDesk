@@ -103,6 +103,7 @@ export default {
   watch: {
     // 父组件通知子组件把activeIndex修改成最后一位
     updateActive() {
+      console.log(this.apps.length);
       this.activeIndex = this.apps.length - 1;
     },
     needInit(){
@@ -246,6 +247,8 @@ export default {
     },
   },
   async created() {
+    // 修复最小化后，点开active却是0
+    this.activeIndex = this.apps.length - 1;
     await this.init();
   },
 };

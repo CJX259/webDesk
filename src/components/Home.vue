@@ -637,8 +637,6 @@ export default {
         this.bottomActive = this.bottomIcons.indexOf(name);
         // 从最小化中去除
         this.changeSmallWrapper("delete", name);
-        console.log("从small中去除" + name);
-        console.log("small", this.smallWrapper);
       }
     },
     // 双击事件，窗口打开时禁止拖动图标

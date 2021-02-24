@@ -63,7 +63,6 @@ export default {
   },
   mounted() {
     this.setTime();
-    console.log(this.iconUrl);
   },
 };
 </script>

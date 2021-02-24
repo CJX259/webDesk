@@ -16,7 +16,6 @@
 当往下一个图标拖动的时候出现特殊情况，preReplace=dragNode
 以及当拖动第一个图标到第二个图标时也属于特殊情况 preDragNode=null
 
-当拖动图标，但又移回原位（即没有移动），下次拖动就会出现问题！！（未解决）
 
 对于双击事件的判断：
 利用 setTimeout，在规定时间内再点击才能触发双击事件（setTimeout 返回的函数作为变量判断）
@@ -71,3 +70,5 @@ slot 里面给出是渲染的数据，home 组件中再进行绑定值渲染（�
 解决方法：利用Promise实现等待。
 操作login的函数返回一个promise对象，然后把resolve传入给login组件，当成功时，调用resolve(1),当失败时调用resolve(0)
 Home中调用该操作login函数时，利用await等待其返回值，并判断，即可实现需求。
+
+未解决：打开一个web然后最小化，再新打开一个，active不是最新的
