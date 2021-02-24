@@ -5,7 +5,12 @@
     @click="changeActiveWrapper(name)"
     :ref="wrapperRefName"
   >
-    <div class="header" @dblclick="changeMax(!max, name)" @mousedown="onMousedown($event)" @mouseup="onMouseup">
+    <div
+      class="header"
+      @dblclick="changeMax(!max, name)"
+      @mousedown="onMousedown($event)"
+      @mouseup="onMouseup"
+    >
       <div class="left" @drag.prevent="onDrag">
         <div
           v-for="(app, i) in apps"
@@ -37,14 +42,25 @@
       <!-- <iframe class="webpage" :src="data"></iframe> -->
       <div class="webpage">
         <!-- 写完后端后，这里只传index即可 -->
-        <slot :data="(data)" ></slot>
+        <template v-if="name !== 'txt'">
+          <slot :data="data"></slot>
+        </template>
+        <template v-else>
+          <textarea
+            @keydown.ctrl.prevent="handleKeyDown($event, data)"
+            class="txt"
+            v-model="data.content"
+            autofocus="autofocus"
+          />
+        </template>
+        <template> </template>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios';
+import axios from "axios";
 export default {
   props: [
     "apps",
@@ -58,16 +74,19 @@ export default {
     "changeMax",
     // name是打开的格式（chrome, txt）
     "name",
-    "iconsData"
+    "iconsData",
+    "showLogin",
   ],
-  computed:{
-    wrapperRefName(){
-      return this.name + 'Wrapper';
+  computed: {
+    wrapperRefName() {
+      return this.name + "Wrapper";
     },
     renderData() {
-      console.log(this.dataMap);
       let render = this.apps.map((app) => {
-        return this.dataMap[app.title] ? this.dataMap[app.title] : "";
+        return {
+          name: app.title,
+          content: this.dataMap[app.title] ? this.dataMap[app.title] : "",
+        };
       });
       return render;
     },
@@ -88,13 +107,57 @@ export default {
       this.activeIndex = this.apps.length - 1;
     },
   },
+
   methods: {
+    onInput(e) {
+      console.log(e);
+    },
+    isLogin() {
+      if (sessionStorage.getItem("login")) {
+        return true;
+      } else {
+        return false;
+      }
+    },
+    // 处理txt文本的保存
+    async handleKeyDown(e, pageData) {
+      if (e.keyCode == 83) {
+        // 登陆验证
+        if (!this.isLogin()) {
+          const resp = await this.showLogin(true);
+          if (resp) {
+            this.showLogin(false);
+            this.writeFile(pageData);
+          } else {
+            alert("密码错误，无权修改");
+          }
+          this.showLogin(false);
+        } else {
+          this.writeFile(pageData);
+        }
+      }
+    },
+    async writeFile(pageData) {
+      const resp = await axios.post("/api/txt/write", {
+        content: pageData.content,
+        filename: pageData.name,
+      });
+      if (!resp.data.data.err) {
+        // 写入成功,重新请求数据
+        await this.init();
+        alert(resp.data.data.msg);
+      } else {
+        alert(resp.data.data.msg);
+      }
+    },
     // 无实际作用，用于阻止pageDom产生的drag事件，导致移动header失败
     onDrag() {},
     onMousedown(e) {
       this.mouseDown = true;
-      this.disX = e.pageX - this.$refs[this.wrapperRefName].getClientRects()[0].left;
-      this.disY = e.pageY - this.$refs[this.wrapperRefName].getClientRects()[0].top;
+      this.disX =
+        e.pageX - this.$refs[this.wrapperRefName].getClientRects()[0].left;
+      this.disY =
+        e.pageY - this.$refs[this.wrapperRefName].getClientRects()[0].top;
       // 给document注册move事件
       document.onmousemove = (e) => {
         const appWrapperDom = this.$refs[this.wrapperRefName];
@@ -145,40 +208,47 @@ export default {
     // 最大化或正常
     resize() {
       if (this.$refs[this.wrapperRefName].className.includes("max")) {
-        this.$refs[this.wrapperRefName].setAttribute("class", "application-wrapper");
+        this.$refs[this.wrapperRefName].setAttribute(
+          "class",
+          "application-wrapper"
+        );
       } else {
-        this.$refs[this.wrapperRefName].setAttribute("class", "max application-wrapper");
+        this.$refs[this.wrapperRefName].setAttribute(
+          "class",
+          "max application-wrapper"
+        );
       }
       // console.log(this.$refs.appWrapper.classList) ;
     },
-  },
-  async created(){
-    // let resp;
-    if(this.name === 'txt'){
-      // txt,则遍历所有iconsData，请求read对应名字的文件，保存在data中
-      this.iconsData.forEach(async icon=>{
-        const resp = await axios.get("/api/txt/read", {
-          params:{
-            filename: icon.name,
+    // 请求获得dataMap等数据
+    async init() {
+      if (this.name === "txt") {
+        // txt,则遍历所有iconsData，请求read对应名字的文件，保存在data中
+        this.iconsData.forEach(async (icon) => {
+          const resp = await axios.get("/api/txt/read", {
+            params: {
+              filename: icon.name,
+            },
+          });
+          if (resp.status === 200) {
+            // 给dataMap新设置的属性设置响应式
+            this.$set(this.dataMap, icon.name, resp.data.data.msg);
           }
         });
-        if(resp.status === 200){
-          // 给dataMap新设置的属性设置响应式
-          this.$set(this.dataMap, icon.name, resp.data.data.msg);
+      } else if (this.name === "chrome") {
+        // 不用一个个拿
+        const resp = await axios.get("/api/project/getmap");
+        if (resp.status === 200) {
+          resp.data.data.forEach((item) => {
+            this.$set(this.dataMap, item.name, item.address);
+          });
         }
-      })
-    }else if(this.name === 'chrome'){
-      // 不用一个个拿
-      const resp = await axios.get('/api/project/getmap');
-      if(resp.status === 200){
-        resp.data.data.forEach(item=>{
-          this.$set(this.dataMap, item.name, item.address);
-        })
       }
-    }
-    // console.log(this.dataMap);
-
-  }
+    },
+  },
+  async created() {
+    await this.init();
+  },
 };
 </script>
 
@@ -195,7 +265,7 @@ export default {
   box-shadow: 1px 1px 3px 1px #000;
   // margin-left: -550px;
   transition: all 0.03s linear;
-  &.active{
+  &.active {
     z-index: 20;
   }
   &.max {
@@ -304,12 +374,12 @@ export default {
       height: 100%;
       box-sizing: border-box;
       background-color: #eee;
-      >textarea{
+      > textarea {
         width: 100%;
         border: none;
         line-height: 20px;
         height: 100%;
-        resize:none;
+        resize: none;
         box-sizing: border-box;
         padding: 10px;
         outline: none;

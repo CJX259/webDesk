@@ -48,7 +48,7 @@
           :changeSmallWrapper="changeSmallWrapper"
         >
           <template v-slot:default="pageData">
-            <iframe class="webpage" :src="pageData.data"></iframe>
+            <iframe class="webpage" :src="pageData.data.content"></iframe>
           </template>
         </Application>
       </template>
@@ -65,12 +65,13 @@
           :max="txtMax"
           :changeMax="changeMax"
           name="txt"
+          :showLogin="changeNeedLogin"
           :iconsData="iconsData.filter(item=>item.type === 'txt')"
           :changeSmallWrapper="changeSmallWrapper"
         >
-          <template v-slot:default="pageData">
-            <textarea @keydown.prevent.ctrl="handleKeyDown($event, pageData)" class="txt" :value="pageData.data" />
-          </template>
+          <!-- <template v-slot:default="pageData">
+            <textarea @keydown.prevent.ctrl="handleKeyDown($event, pageData)" class="txt" :value="pageData.data.content" />
+          </template> -->
         </Application>
       </template>
     </transition-group>
@@ -80,6 +81,9 @@
       :bottomIcons="bottomIcons"
       :changeCalendar="rightCalendar"
     />
+    <transition name="app">
+      <Login v-if="needLogin" :resolve="loginResolve" />
+    </transition>
   </div>
 </template>
 <script>
@@ -88,6 +92,7 @@ import Icon from "./Icon";
 import Footer from "./Footer";
 import Calendar from "./Calendar";
 import Application from "./Application";
+import Login from './Login';
 
 export default {
   components: {
@@ -95,6 +100,7 @@ export default {
     Icon,
     Calendar,
     Application,
+    Login,
   },
   data() {
     return {
@@ -147,15 +153,19 @@ export default {
       // 数据库中的icon数据
       iconsData: [],
 
+      needLogin: false,
+      loginResolve: ""
+
     };
   },
   methods: {
-    // 处理txt文本的保存
-    handleKeyDown(e, pageData){
-      console.log(pageData);
-      if(e.keyCode == 83){
-        console.log(111);
-      }
+    // 展示login组件
+    changeNeedLogin(flag){
+      this.needLogin = flag;
+      if(!flag) return;
+      return new Promise((resolve)=>{
+        this.loginResolve = resolve;
+      })
     },
     // 点击展示内容，设置成activeWrapper
     changeActiveWrapper(name) {
