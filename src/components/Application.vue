@@ -112,44 +112,6 @@ export default {
   },
 
   methods: {
-    // isLogin() {
-    //   if (sessionStorage.getItem("login")) {
-    //     return true;
-    //   } else {
-    //     return false;
-    //   }
-    // },
-    // // 处理txt文本的保存
-    // async handleKeyDown(e, pageData) {
-    //   if (e.keyCode == 83) {
-    //     // 登陆验证
-    //     if (!this.isLogin()) {
-    //       const resp = await this.showLogin(true);
-    //       if (resp) {
-    //         this.showLogin(false);
-    //         this.writeFile(pageData);
-    //       } else {
-    //         alert("密码错误，无权修改");
-    //       }
-    //       this.showLogin(false);
-    //     } else {
-    //       this.writeFile(pageData);
-    //     }
-    //   }
-    // },
-    // async writeFile(pageData) {
-    //   const resp = await axios.post("/api/txt/write", {
-    //     content: pageData.content,
-    //     filename: pageData.name,
-    //   });
-    //   if (!resp.data.data.err) {
-    //     // 写入成功,重新请求数据
-    //     await this.init();
-    //     alert(resp.data.data.msg);
-    //   } else {
-    //     alert(resp.data.data.msg);
-    //   }
-    // },
     // 无实际作用，用于阻止pageDom产生的drag事件，导致移动header失败
     onDrag() {},
     onMousedown(e) {

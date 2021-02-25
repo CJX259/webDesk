@@ -13,11 +13,7 @@ export default {
     Home,
   },
   mounted() {
-    // 鼠标右键事件
-    document.oncontextmenu = function (e) {
-      // e.preventDefault();
-      console.log(e);
-    };
+    
   },
 };
 </script>

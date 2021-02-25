@@ -1,5 +1,9 @@
 <template>
-  <div id="home" @click="contentClick">
+  <div
+    @contextmenu.prevent="rightClick($event)"
+    id="home"
+    @click="contentClick"
+  >
     <!-- 此处要做一个栅格，透明背景 -->
     <!-- 当 -->
     <div class="wrapper">
@@ -74,7 +78,7 @@
               @keydown.ctrl.prevent="handleKeyDown($event, pageData.data)"
               class="txt"
               v-model="pageData.data.content"
-              autofocus="autofocus"
+              autofocus
             />
           </template>
         </Application>
@@ -89,6 +93,13 @@
     <transition name="app">
       <Login v-if="needLogin" :resolve="loginResolve" />
     </transition>
+    <transition name="app">
+      <Createicon
+        v-if="showCreate"
+        :submit="createIcon"
+        :changeShowCreate="changeShowCreate"
+      />
+    </transition>
   </div>
 </template>
 <script>
@@ -98,6 +109,7 @@ import Footer from "./Footer";
 import Calendar from "./Calendar";
 import Application from "./Application";
 import Login from "./Login";
+import Createicon from "./CreateIcon";
 
 export default {
   components: {
@@ -106,6 +118,7 @@ export default {
     Calendar,
     Application,
     Login,
+    Createicon,
   },
   data() {
     return {
@@ -163,9 +176,66 @@ export default {
       loginResolve: "",
       // 重新请求application的远程数据：dataMap等
       applicationInit: false,
+
+      // 展示create组件
+      showCreate: false,
     };
   },
   methods: {
+    // 右键事件
+    rightClick(e) {
+      console.log(e);
+      this.showCreate = true;
+    },
+    changeShowCreate(flag) {
+      this.showCreate = flag;
+    },
+    // 新建图标
+    async createIcon(data) {
+      if (data.type === "txt" && !data.name.includes(".txt")) {
+        data.name += ".txt";
+      }
+      const resp = await axios.post("/api/icon/addicon", {
+        ...data,
+      });
+      if (!resp.data.data.err) {
+        // 写入成功,重新请求数据
+        this.reload();
+        return {
+          err: false,
+          msg: "成功",
+        };
+      } else {
+        return {
+          err: true,
+          msg: resp.data.data.msg,
+        };
+      }
+    },
+    // 登录操作进行的函数,传入需要登录的函数操作和参数即可
+    async handleLogin(func, ...arg) {
+      if (!this.isLogin()) {
+        const resp = await this.changeNeedLogin(true);
+        if (resp) {
+          this.$message({
+            message: "密码正确",
+            duration: 2000,
+            type: "success",
+          });
+          this.changeNeedLogin(false);
+          func.call(this, ...arg);
+        } else {
+          this.$message({
+            message: "密码错误",
+            duration: 2000,
+            type: "error",
+          });
+        }
+        this.changeNeedLogin(false);
+      } else {
+        func.call(this, ...arg);
+      }
+    },
     // 判断有没有登录过
     isLogin() {
       if (sessionStorage.getItem("login")) {
@@ -178,18 +248,7 @@ export default {
     async handleKeyDown(e, data) {
       if (e.keyCode == 83) {
         // 登陆验证
-        if (!this.isLogin()) {
-          const resp = await this.changeNeedLogin(true);
-          if (resp) {
-            this.changeNeedLogin(false);
-            this.writeFile(data);
-          } else {
-            alert("密码错误，无权修改");
-          }
-          this.changeNeedLogin(false);
-        } else {
-          this.writeFile(data);
-        }
+        this.handleLogin(this.writeFile, data);
       }
     },
     // 调用，写文件
@@ -201,9 +260,17 @@ export default {
       if (!resp.data.data.err) {
         // 写入成功,重新请求数据
         this.applicationInit = !this.applicationInit;
-        alert(resp.data.data.msg);
+        this.$message({
+          message: resp.data.data.msg,
+          duration: 2000,
+          type: "success",
+        });
       } else {
-        alert(resp.data.data.msg);
+        this.$message({
+          message: resp.data.data.msg,
+          duration: 2000,
+          type: "error",
+        });
       }
     },
     // 展示login组件，但需要login时，会返回一个promise对象
@@ -494,7 +561,11 @@ export default {
     handleDragStart(e) {
       // 打开窗口时禁止拖动
       if (this.apps.length !== 0 || this.txts.length !== 0) {
-        alert("存在窗口时禁止拖动图标");
+        this.$message({
+          message: "存在窗口时禁止拖动图标",
+          duration: 2000,
+          type: "warning",
+        });
         return;
       }
       var x = 1;
@@ -658,7 +729,11 @@ export default {
           active = "App";
         }
         if (this[arr].length >= 11) {
-          alert("同时最多开启11个窗口");
+          this.$message({
+            message: "同时最多开启11个窗口",
+            type: "warning",
+            duration: 2000,
+          });
           return;
         }
         this.handleShow(type);
@@ -666,71 +741,74 @@ export default {
         this["active" + active] = !this["active" + active];
       }
     },
+    async reload() {
+      this.init();
+      //创建链表结构
+      class NodeList {
+        constructor(title, img, next) {
+          this.title = title || "";
+          this.img = img || "";
+          this.next = next || null;
+        }
+      }
+      var iconNode = new NodeList();
+      this.home = iconNode;
+      // 初始数据
+      // 需要修改，titles作为icons存储在数据库中
+      // imgUrls作为vue的数据存在data中
+      // init函数执行时，查数据库，拿到icons数组，icon有type属性，根据不同的type属性，分配不同的img
+      // 上传操作时，传入icon的数据以及对应的address分别存入不同的表，再重新render一下即可
+      let resp = await axios.get("/api/icon/geticon");
+      if (resp.status === 200) {
+        this.iconsData = resp.data.data;
+      }
+      // var this.iconsData = [
+      //   "我的电脑",
+      //   "个人博客",
+      //   "项目文件",
+      //   "选课系统",
+      //   "用户信息.txt",
+      // ];
+      var imgUrls = [
+        {
+          name: "chrome",
+          img: require("../assets/Chrome.png"),
+        },
+        {
+          name: "txt",
+          img: require("../assets/记事本.png"),
+        },
+      ];
+      // var imgUrls = [
+      //   require('imgUrl')
+      // ]
+      // 通过初始的数据渲染这个链表
+      for (var i = 0; i < this.iconsData.length; i++) {
+        iconNode.title = this.iconsData[i].name;
+        // iconNode.img = imgUrls.filter(item=>item.name === this.iconsData[i].type)[0].img;
+        var imgUrl = imgUrls.filter(
+          (item) => item.name === this.iconsData[i].type
+        );
+        if (imgUrl.length <= 0) {
+          throw new Error("缺少图片类型：" + this.iconsData[i].type);
+        } else {
+          iconNode.img = imgUrl[0].img;
+        }
+        // 最后一次
+        if (i === this.iconsData.length - 1) {
+          iconNode.next = null;
+          break;
+        }
+        var newNode = new NodeList();
+        iconNode.next = newNode;
+        iconNode = newNode;
+      }
+      // 通过链表建立出titles和imgUrls的数据
+      this.renderDataFromHomeList();
+    },
   },
   async mounted() {
-    this.init();
-    //创建链表结构
-    class NodeList {
-      constructor(title, img, next) {
-        this.title = title || "";
-        this.img = img || "";
-        this.next = next || null;
-      }
-    }
-    var iconNode = new NodeList();
-    this.home = iconNode;
-    // 初始数据
-    // 需要修改，titles作为icons存储在数据库中
-    // imgUrls作为vue的数据存在data中
-    // init函数执行时，查数据库，拿到icons数组，icon有type属性，根据不同的type属性，分配不同的img
-    // 上传操作时，传入icon的数据以及对应的address分别存入不同的表，再重新render一下即可
-    let resp = await axios.get("/api/icon/geticon");
-    if (resp.status === 200) {
-      this.iconsData = resp.data.data;
-    }
-    // var this.iconsData = [
-    //   "我的电脑",
-    //   "个人博客",
-    //   "项目文件",
-    //   "选课系统",
-    //   "用户信息.txt",
-    // ];
-    var imgUrls = [
-      {
-        name: "chrome",
-        img: require("../assets/Chrome.png"),
-      },
-      {
-        name: "txt",
-        img: require("../assets/记事本.png"),
-      },
-    ];
-    // var imgUrls = [
-    //   require('imgUrl')
-    // ]
-    // 通过初始的数据渲染这个链表
-    for (var i = 0; i < this.iconsData.length; i++) {
-      iconNode.title = this.iconsData[i].name;
-      // iconNode.img = imgUrls.filter(item=>item.name === this.iconsData[i].type)[0].img;
-      var imgUrl = imgUrls.filter(
-        (item) => item.name === this.iconsData[i].type
-      );
-      if (imgUrl.length <= 0) {
-        throw new Error("缺少图片类型：" + this.iconsData[i].type);
-      } else {
-        iconNode.img = imgUrl[0].img;
-      }
-      // 最后一次
-      if (i === this.iconsData.length - 1) {
-        iconNode.next = null;
-        break;
-      }
-      var newNode = new NodeList();
-      iconNode.next = newNode;
-      iconNode = newNode;
-    }
-    // 通过链表建立出titles和imgUrls的数据
-    this.renderDataFromHomeList();
+    await this.reload();
   },
 };
 </script>

@@ -1,9 +1,15 @@
 <template>
-  <div class="mask">
+  <div class="mask" @click.self="resolve(0)">
     <div class="login-wrapper">
       <h3>请先验证身份</h3>
-      密码：<input @keydown.enter="login" type="password" v-model="password" />
-      <button @click="login">确认</button>
+      密码：
+      <el-input
+        placeholder="请输入密码"
+        v-model="password"
+        type="password"
+        @keydown.enter.native="login"
+      ></el-input>
+      <el-button @click="login">确认</el-button>
     </div>
   </div>
 </template>
@@ -24,7 +30,6 @@ export default {
         sessionStorage.setItem("login", md5(this.password));
         this.resolve(1);
       } else {
-        console.log("密码错误");
         this.resolve(0);
       }
     },
@@ -40,20 +45,18 @@ export default {
   height: 100%;
   .login-wrapper {
     position: fixed;
-    width: 300px;
-    height: 120px;
+    width: 400px;
+    height: 150px;
     border-radius: 20px;
     border: 1px solid #000;
     color: #000;
     background: #fff;
-    left: calc(50% - 150px);
-    top: calc(30% - 25px);
+    left: calc(50% - 200px);
+    top: calc(30% - 70px);
     text-align: center;
     line-height: 50px;
-    > button {
-      margin-left: 10px;
-      font-size: 12px;
-      padding: 0 5px;
+    >.el-input{
+      width: 200px;
     }
   }
 }
