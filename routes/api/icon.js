@@ -35,7 +35,6 @@ router.post('/addicon', asyncHandler(async (req, res) => {
     // 是需要address，则给该表注入数据
     if (address) {
       resp = await projectSer.addProjectMap(name, address);
-      console.log(resp);
     } else if (type === txtType) {
       // 是txt，则创建文件
       resp = await txtSer.openFile(name);

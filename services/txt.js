@@ -1,6 +1,6 @@
 const path = require('path');
 const fs = require('fs');
-const Icon = require('../models/icon');
+// const Icon = require('../models/icon');
 const basePath = path.resolve(__dirname, "../public");
 const { txtType } = require('../utils/value');
 module.exports.readTxt = async function (filename) {
@@ -38,7 +38,7 @@ module.exports.openFile = async function (filename) {
         encoding: 'utf-8',
       });
       // 往数据库中添加数据
-      await Icon.create({ name: filename, type: txtType })
+      // await Icon.create({ name: filename, type: txtType })
       return {
         err: false,
         msg: "创建成功"

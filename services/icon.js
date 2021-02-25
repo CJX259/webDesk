@@ -9,6 +9,7 @@ module.exports.addIcon = async function (name, type) {
         msg: "创建成功"
       }
     } catch (error) {
+      console.log(error);
       return {
         err: true,
         msg: error
