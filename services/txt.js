@@ -99,6 +99,31 @@ module.exports.deleteFile = async function (filename){
     }
   }
 }
+
+module.exports.rename = async function (oldName, newName){
+  let check = checkFilename(oldName);
+  if(check.err){
+    return check;
+  }
+  check = checkFilename(newName);
+  if(check.err){
+    return check;
+  }
+  const oldPath = path.resolve(basePath, oldName);
+  const newPath = path.resolve(basePath, newName);
+  try{
+    const resp = await fs.renameSync(oldPath, newPath);
+    return {
+      err: false,
+      msg: resp
+    }
+  }catch(err){
+    return {
+      err: true,
+      msg: err
+    }
+  }
+}
 //检查filename参数
 function checkFilename(filename) {
   if (!filename) {

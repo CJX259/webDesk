@@ -46,14 +46,20 @@ router.post('/addicon', asyncHandler(async (req, res) => {
   }
 }))
 
-// 只改名字
-router.post('/updatename', asyncHandler(async (req, res) => {
-  let { name, newName } = req.body;
+// 只改名字和地址
+router.post('/updateicon', asyncHandler(async (req, res) => {
+  let { name, newName, address } = req.body;
   if (!name) {
     throw new Error('参数缺失');
   }
   try {
-    const resp = await iconSer.updateIconByName(name, newName);
+    let resp;
+    resp = await iconSer.updateIconByName(name, newName);
+    if (!name.includes('.txt') && address) {
+      resp = await projectSer.updateProjectMap(name, newName, address ? address : "");
+    }else if(name.includes('.txt')){
+      resp = await txtSer.rename(name, newName);
+    }
     return resp;
   } catch (error) {
     throw new Error(error);
@@ -63,17 +69,17 @@ router.post('/updatename', asyncHandler(async (req, res) => {
 router.get('/deleteicon', asyncHandler(async (req, res) => {
   let { name, type } = req.query;
   // 从name的后缀判断是什么文件类型
-  if(!type && name.includes(txtType)){
+  if (!type && name.includes(txtType)) {
     type = txtType;
   }
-  if (!name||!type) {
+  if (!name || !type) {
     throw new Error("缺少参数");
   }
   try {
     let resp;
-    if(type === needAddressType){
+    if (type === needAddressType) {
       resp = await projectSer.deleteProjectMap(name);
-    }else if(type === txtType){
+    } else if (type === txtType) {
       resp = await txtSer.deleteFile(name);
     }
     resp = await iconSer.deleteIconByName(name);

@@ -43,9 +43,23 @@ async function getAddressByName(name){
     throw new Error(err);
   }
 }
+
+async function updateProjectMap(name, newName, address){
+  try{
+    const resp = await ProjectMap.update({name: newName, address}, {
+      where: {
+        name: name
+      }
+    });
+    return resp;
+  }catch(err){
+    throw new Error(err);
+  }
+}
 module.exports = {
   addProjectMap,
   getProjectMap,
   deleteProjectMap,
-  getAddressByName
+  getAddressByName,
+  updateProjectMap
 }
