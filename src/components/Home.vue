@@ -97,9 +97,9 @@
           :mode="rightMenuMode"
           :left="rightMenuPosition.x"
           :top="rightMenuPosition.y"
-          :handleUpdate="updateIcon"
-          :handleDelete="deleteIcon"
-          :handleAdd="addIcon"
+          :handleUpdate="clickUpdateByMenu"
+          :handleDelete="clickDeleteByMenu"
+          :handleAdd="clickAddByMenu"
           :changeShow="changeRightMenu"
         />
       </template>
@@ -108,14 +108,15 @@
       <Createicon
         key="create"
         v-if="showCreate"
-        :submit="createIcon"
+        :submit="handleCreateIcon"
         :changeShowCreate="changeShowCreate"
       />
       <UpdateIcon
         key="update"
         v-if="showUpdate"
-        :submit="updateIcon"
+        :submit="handleUpdateIcon"
         :changeShowUpdate="changeShowUpdate"
+        :icon="rightIcon"
       />
     </transition-group>
   </div>
@@ -228,12 +229,36 @@ export default {
       this.preX = 0;
       this.preY = 0;
     },
+    async handleUpdateIcon(data) {
+      return await this.handleLogin(this.updateIcon, data);
+    },
+    async updateIcon(data) {
+      try {
+        const resp = await axios.post("/api/icon/updateicon", {
+          name: this.rightIcon.title,
+          newName: data.name,
+          address: data.address ? data.address : "",
+        });
+        if (!resp.data.data.err) {
+          this.reload();
+          return {
+            err: false,
+            msg: "成功",
+          };
+        }
+      } catch (err) {
+        return {
+          err: true,
+          msg: err,
+        };
+      }
+    },
     // 点击右键的修改
-    updateIcon() {
+    clickUpdateByMenu() {
       this.changeShowUpdate(true);
     },
     // 点击右键的删除
-    async deleteIcon() {
+    async clickDeleteByMenu() {
       try {
         await this.$confirm("此操作将永久删除该文件, 是否继续?", "提示", {
           confirmButtonText: "确定",
@@ -265,8 +290,8 @@ export default {
         });
       }
     },
-    // 点击右键
-    addIcon() {
+    // 点击右键添加
+    clickAddByMenu() {
       this.changeShowCreate(true);
     },
     // 右键出两种
@@ -323,6 +348,9 @@ export default {
     changeShowUpdate(flag) {
       this.showUpdate = flag;
     },
+    async handleCreateIcon(data) {
+      return await this.handleLogin(this.createIcon, data);
+    },
     // 新建图标
     async createIcon(data) {
       if (data.type === "txt" && !data.name.includes(".txt")) {
@@ -356,7 +384,7 @@ export default {
             type: "success",
           });
           this.changeNeedLogin(false);
-          func.call(this, ...arg);
+          return func.call(this, ...arg);
         } else {
           this.$message({
             message: "密码错误",
@@ -366,7 +394,7 @@ export default {
         }
         this.changeNeedLogin(false);
       } else {
-        func.call(this, ...arg);
+        return func.call(this, ...arg);
       }
     },
     // 判断有没有登录过
@@ -381,7 +409,7 @@ export default {
     async handleKeyDown(e, data) {
       if (e.keyCode == 83) {
         // 登陆验证
-        this.handleLogin(this.writeFile, data);
+        return await this.handleLogin(this.writeFile, data);
       }
     },
     // 调用，写文件

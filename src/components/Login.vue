@@ -40,7 +40,7 @@ export default {
 <style lang="less" scoped>
 .mask {
   position: relative;
-  z-index: 30;
+  z-index: 100;
   width: 100%;
   height: 100%;
   .login-wrapper {

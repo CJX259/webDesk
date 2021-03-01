@@ -35,8 +35,6 @@ export default {
   data() {
     return {
       types: ["txt", "chrome"],
-      name: "",
-      address: "",
       sizeForm: {
         name: "",
         type: "",
@@ -87,13 +85,13 @@ export default {
     position: fixed;
     padding: 20px;
     box-sizing: border-box;
-    width: 400px;
+    width: 450px;
     height: 300px;
     border-radius: 20px;
     border: 1px solid #000;
     color: #000;
     background: #fff;
-    left: calc(50% - 200px);
+    left: calc(50% - 225px);
     top: calc(30% - 150px);
     text-align: center;
     // line-height: 50px;
