@@ -1,9 +1,5 @@
 <template>
-  <div
-    @contextmenu.prevent="rightClick($event)"
-    id="home"
-    @click="contentClick"
-  >
+  <div @contextmenu.prevent="() => {}" id="home" @click="contentClick">
     <!-- 此处要做一个栅格，透明背景 -->
     <!-- 当 -->
     <div class="wrapper">
@@ -19,6 +15,7 @@
           @click="clickIcon"
           @dragend="handleDragEnd"
           @dragstart="handleDragStart"
+          @click.stop.right.prevent="rightClickByIcon($event, item, i)"
         >
           <Icon
             :imgUrl="item.img"
@@ -94,12 +91,33 @@
       <Login v-if="needLogin" :resolve="loginResolve" />
     </transition>
     <transition name="app">
+      <template v-if="showRightMenu">
+        <right-menu
+          :icon="rightIcon"
+          :mode="rightMenuMode"
+          :left="rightMenuPosition.x"
+          :top="rightMenuPosition.y"
+          :handleUpdate="updateIcon"
+          :handleDelete="deleteIcon"
+          :handleAdd="addIcon"
+          :changeShow="changeRightMenu"
+        />
+      </template>
+    </transition>
+    <transition-group name="app">
       <Createicon
+        key="create"
         v-if="showCreate"
         :submit="createIcon"
         :changeShowCreate="changeShowCreate"
       />
-    </transition>
+      <UpdateIcon
+        key="update"
+        v-if="showUpdate"
+        :submit="updateIcon"
+        :changeShowUpdate="changeShowUpdate"
+      />
+    </transition-group>
   </div>
 </template>
 <script>
@@ -110,6 +128,8 @@ import Calendar from "./Calendar";
 import Application from "./Application";
 import Login from "./Login";
 import Createicon from "./CreateIcon";
+import RightMenu from "./RightMenu";
+import UpdateIcon from "./UpdateIcon";
 
 export default {
   components: {
@@ -119,6 +139,8 @@ export default {
     Application,
     Login,
     Createicon,
+    RightMenu,
+    UpdateIcon,
   },
   data() {
     return {
@@ -179,16 +201,127 @@ export default {
 
       // 展示create组件
       showCreate: false,
+      showUpdate: false,
+      // 展示右键菜单
+      showRightMenu: false,
+      // 'update add'  更新和新增两种模式
+      rightMenuMode: "",
+      // 右击的icon数据
+      rightIcon: {},
+      rightMenuPosition: {
+        x: 0,
+        y: 0,
+      },
     };
   },
   methods: {
-    // 右键事件
-    rightClick(e) {
-      console.log(e);
-      this.showCreate = true;
+    changeRightMenu(flag) {
+      this.showRightMenu = flag;
+      // 去掉active
+      for (let i = 0; i < this.icons.length - 1; i++) {
+        for (let j = 0; j < this.icons[i].length - 1; j++) {
+          if (this.icons[i][j].active) {
+            this.icons[i][j].active = false;
+          }
+        }
+      }
+      this.preX = 0;
+      this.preY = 0;
+    },
+    // 点击右键的修改
+    updateIcon() {
+      this.changeShowUpdate(true);
+    },
+    // 点击右键的删除
+    async deleteIcon() {
+      try {
+        await this.$confirm("此操作将永久删除该文件, 是否继续?", "提示", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning",
+        });
+        const resp = await axios.get("/api/icon/deleteicon", {
+          params: {
+            name: this.rightIcon.title,
+            type: this.rightIcon.title.includes(".txt") ? "txt" : "chrome",
+          },
+        });
+        if (!resp.data.data.err) {
+          this.$message({
+            type: "success",
+            message: "删除成功!",
+          });
+          this.reload();
+        } else {
+          this.$message({
+            type: "error",
+            message: "删除失败!",
+          });
+        }
+      } catch (err) {
+        this.$message({
+          type: "warning",
+          message: "取消删除",
+        });
+      }
+    },
+    // 点击右键
+    addIcon() {
+      this.changeShowCreate(true);
+    },
+    // 右键出两种
+    // 1.icon有数据情况，提供修改和删除操作
+    // 2.icon无数据情况，提供新增操作
+    rightClickByIcon(e, icon) {
+      this.rightMenuPosition.x = e.pageX;
+      this.rightMenuPosition.y = e.pageY;
+      if (!this.showRightMenu) {
+        this.showRightMenu = true;
+      }
+      if (icon.title === "") {
+        this.rightIcon = {};
+        this.rightMenuMode = "add";
+        // 去掉active
+        for (let i = 0; i < this.icons.length - 1; i++) {
+          for (let j = 0; j < this.icons[i].length - 1; j++) {
+            if (this.icons[i][j].active) {
+              this.icons[i][j].active = false;
+            }
+          }
+        }
+        this.preX = 0;
+        this.preY = 0;
+      } else {
+        // 不是active，就设置为active
+        if (!icon.active) {
+          for (let i = 0; i < this.icons.length - 1; i++) {
+            for (let j = 0; j < this.icons[i].length - 1; j++) {
+              if (this.icons[i][j].active) {
+                this.icons[i][j].active = false;
+              }
+            }
+          }
+          icon.active = true;
+          //在这里设置prevX
+          for (let i = 0; i < this.icons.length - 1; i++) {
+            for (let j = 0; j < this.icons[i].length - 1; j++) {
+              if (this.icons[i][j].active) {
+                this.preX = i + 1;
+                this.preY = j + 1;
+              }
+            }
+          }
+        }
+        // 传入icon
+        this.rightMenuMode = "update";
+        this.rightIcon = icon;
+      }
     },
     changeShowCreate(flag) {
       this.showCreate = flag;
+    },
+    changeShowUpdate(flag) {
+      this.showUpdate = flag;
     },
     // 新建图标
     async createIcon(data) {
@@ -425,7 +558,6 @@ export default {
       }
       // 拖动到原本的位置，不变，且恢复dragIconIndex
       if (this.dragIconIndex.x === x - 1 && this.dragIconIndex.y === y - 1) {
-        console.log("不处理");
         this.dragIconIndex = null;
         return;
       }
@@ -665,7 +797,6 @@ export default {
       // 把active都清false
       // 如果x，y = preX，preY
       // 触发双击事件
-
       if (this.preX != 0) {
         this.icons[this.preX - 1][this.preY - 1].active = false;
       }
@@ -696,6 +827,7 @@ export default {
           this.doubleClickListen = null;
         }, 500);
       }
+      this.showRightMenu = false;
     },
     // 处理打开的文件的最小化和底部图标,还要从最小化中去除
     handleShow(name) {

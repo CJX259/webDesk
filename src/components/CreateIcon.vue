@@ -46,6 +46,13 @@ export default {
   },
   methods: {
     async onSubmit() {
+      if(!this.sizeForm.name || !this.sizeForm.type){
+        this.$message({
+          type: 'warning',
+          message: '缺少必要参数'
+        })
+        return;
+      }
       const resp = await this.submit(this.sizeForm);
       if (!resp.err) {
         //成功
