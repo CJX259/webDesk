@@ -74,7 +74,6 @@ router.get('/deleteicon', asyncHandler(async (req, res) => {
     if(type === needAddressType){
       resp = await projectSer.deleteProjectMap(name);
     }else if(type === txtType){
-      // 文件的删除还没做好
       resp = await txtSer.deleteFile(name);
     }
     resp = await iconSer.deleteIconByName(name);
