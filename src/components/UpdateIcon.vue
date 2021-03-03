@@ -40,7 +40,7 @@ export default {
     };
   },
   async mounted() {
-    this.type = this.icon.title.includes(".txt") ? "txt" : "chrome";
+    this.type = this.icon.type;
     this.sizeForm.name = this.icon.title;
     if (this.type === "chrome") {
       const resp = await axios.get("/api/project/getmap");

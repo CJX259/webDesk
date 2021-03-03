@@ -39,20 +39,8 @@
       :key="index"
     >
       <div class="cover" v-if="mouseDown || activeWrapper !== name"></div>
-      <!-- <iframe class="webpage" :src="data"></iframe> -->
       <div class="webpage">
-        <!-- 写完后端后，这里只传index即可 -->
-        <!-- <template v-if="name !== 'txt'"> -->
           <slot :data="data"></slot>
-        <!-- </template> -->
-        <!-- <template v-else>
-          <textarea
-            @keydown.ctrl.prevent="handleKeyDown($event, data)"
-            class="txt"
-            v-model="data.content"
-            autofocus="autofocus"
-          />
-        </template> -->
       </div>
     </div>
   </div>

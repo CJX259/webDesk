@@ -149,6 +149,10 @@ export default {
       icons: [[]],
       colLength: 8,
       wrapperLength: 0,
+      //   margin-bottom：3px
+      iconHeight: 65 + 3,
+      //   padding-right：3px
+      iconWidth: 60 + 3,
       preX: 0,
       preY: 0,
       home: null,
@@ -268,7 +272,7 @@ export default {
         const resp = await axios.get("/api/icon/deleteicon", {
           params: {
             name: this.rightIcon.title,
-            type: this.rightIcon.title.includes(".txt") ? "txt" : "chrome",
+            type: this.rightIcon.type,
           },
         });
         if (!resp.data.data.err) {
@@ -354,6 +358,10 @@ export default {
     // 新建图标
     async createIcon(data) {
       if (data.type === "txt" && !data.name.includes(".txt")) {
+        // 把.后面的内容全部替换成txt即可
+        const reg = new RegExp(/./g);
+        console.log(data.name.replace(reg, ''));
+        console.log(data.name);
         data.name += ".txt";
       }
       const resp = await axios.post("/api/icon/addicon", {
@@ -452,29 +460,29 @@ export default {
       this.bottomActive = index;
     },
     // 处理最小化的内容,包含处理buttonActive和activeWrapper
-    changeSmallWrapper(type, name) {
+    changeSmallWrapper(type, appType) {
       switch (type) {
         case "delete":
-          var index = this.bottomIcons.indexOf(name);
+          var index = this.bottomIcons.indexOf(appType);
           this.bottomActive = index;
-          index = this.smallWrapper.indexOf(name);
+          index = this.smallWrapper.indexOf(appType);
           if (index != -1) {
             this.smallWrapper.splice(index, 1);
           }
-          this.activeWrapper = name;
+          this.activeWrapper = appType;
           break;
         case "add":
           // 如果最小化没有，则添加进去
-          if (this.smallWrapper.indexOf(name) === -1) {
-            this.smallWrapper.push(name);
+          if (this.smallWrapper.indexOf(appType) === -1) {
+            this.smallWrapper.push(appType);
           }
           // 如果最小化的是当前最高级，则把最高级换为第一个已打开应用中，非最小化的应用
-          if (this.bottomActive === this.bottomIcons.indexOf(name)) {
+          if (this.bottomActive === this.bottomIcons.indexOf(appType)) {
             this.bottomActive = -1;
             this.activeWrapper = "";
             for (var i = 0; i < this.bottomIcons.length; i++) {
               if (
-                this.bottomIcons[i] !== name &&
+                this.bottomIcons[i] !== appType &&
                 this.smallWrapper.indexOf(this.bottomIcons[i]) === -1
               ) {
                 this.activeWrapper = this.bottomIcons[i];
@@ -506,8 +514,8 @@ export default {
       }
     },
     // 清除apps
-    clearApps(name) {
-      switch (name) {
+    clearApps(type) {
+      switch (type) {
         case "chrome":
           this.apps = [];
           break;
@@ -515,21 +523,21 @@ export default {
           this.txts = [];
       }
       // this.changeActive = 0;
-      this.clearInBottomIcons(name);
+      this.clearInBottomIcons(type);
     },
     changeMax(flag, name) {
       this[name + "Max"] = flag;
     },
     // 关闭应用，清除bottomIcons中相应数据（activeWrapper，bottomActive）
-    clearInBottomIcons(name) {
-      var index = this.bottomIcons.indexOf(name);
+    clearInBottomIcons(type) {
+      var index = this.bottomIcons.indexOf(type);
       this.bottomIcons.splice(index, 1);
-      if (this.activeWrapper === name) {
+      if (this.activeWrapper === type) {
         this.bottomActive = -1;
         this.activeWrapper = "";
         for (var i = 0; i < this.bottomIcons.length; i++) {
           if (
-            this.bottomIcons[i] !== name &&
+            this.bottomIcons[i] !== type &&
             this.smallWrapper.indexOf(this.bottomIcons[i]) === -1
           ) {
             this.activeWrapper = this.bottomIcons[i];
@@ -572,16 +580,12 @@ export default {
       }
       var x = 1;
       var y = 1;
-      //   padding-right：3px
-      var iconWidth = 60 + 3;
-      //   margin-bottom：3px
-      var iconHeight = 65 + 3;
       // padding-left:5
-      while (e.clientX >= x * iconWidth + 5) {
+      while (e.clientX >= x * this.iconWidth + 5) {
         x++;
       }
       // padding-top:5
-      while (e.clientY >= y * iconHeight + 5) {
+      while (e.clientY >= y * this.iconHeight + 5) {
         y++;
       }
       // 拖动到原本的位置，不变，且恢复dragIconIndex
@@ -730,16 +734,11 @@ export default {
       }
       var x = 1;
       var y = 1;
-      //   padding-right：3px
-      var iconWidth = 60 + 3;
-      //   margin-bottom：3px
-      var iconHeight = 65 + 3;
-      // padding-left:5
-      while (e.clientX >= x * iconWidth + 5) {
+      while (e.clientX >= x * this.iconWidth + 5) {
         x++;
       }
       // padding-top:5
-      while (e.clientY >= y * iconHeight + 5) {
+      while (e.clientY >= y * this.iconHeight + 5) {
         y++;
       }
       if (this.icons[x - 1][y - 1].title != "") {
@@ -760,6 +759,7 @@ export default {
         for (var y = 0; y < this.colLength; y++) {
           this.icons[x][y].title = iconNode.title;
           this.icons[x][y].img = iconNode.img;
+          this.icons[x][y].type = iconNode.type;
           // 到链表最后一个了
           if (!iconNode.next) {
             out = true;
@@ -780,12 +780,10 @@ export default {
     // 再把所有网格都渲染出来
     init() {
       var footerHeight = 40;
-      var iconHeight = 65 + 3;
-      var iconWidth = 60 + 3;
       this.colLength = Math.floor(
-        (this.$el.offsetHeight - footerHeight - 10) / iconHeight
+        (this.$el.offsetHeight - footerHeight - 10) / this.iconHeight
       );
-      this.wrapperLength = Math.floor((this.$el.offsetWidth - 10) / iconWidth);
+      this.wrapperLength = Math.floor((this.$el.offsetWidth - 10) / this.iconWidth);
       // 初始化所有栅格
       // 这里数组的第一个是0项
       for (var i = 0; i < this.wrapperLength; i++) {
@@ -796,6 +794,7 @@ export default {
             //   img: require("../assets/logo.png"),
             img: "",
             active: false,
+            type: "",
           });
         }
         if (i == 0) {
@@ -812,14 +811,10 @@ export default {
       var flag = false;
       var x = 1;
       var y = 1;
-      //   padding-right：3px
-      var iconWidth = 60 + 3;
-      //   margin-bottom：3px
-      var iconHeight = 65 + 3;
-      while (e.pageX >= x * iconWidth + 5) {
+      while (e.pageX >= x * this.iconWidth + 5) {
         x++;
       }
-      while (e.pageY >= y * iconHeight + 5) {
+      while (e.pageY >= y * this.iconHeight + 5) {
         y++;
       }
       // 把active都清false
@@ -858,16 +853,16 @@ export default {
       this.showRightMenu = false;
     },
     // 处理打开的文件的最小化和底部图标,还要从最小化中去除
-    handleShow(name) {
-      this.activeWrapper = name;
-      let index = this.bottomIcons.indexOf(name);
+    handleShow(type) {
+      this.activeWrapper = type;
+      let index = this.bottomIcons.indexOf(type);
       if (index === -1) {
-        this.bottomIcons.push(name);
+        this.bottomIcons.push(type);
         this.bottomActive = this.bottomIcons.length - 1;
       } else {
-        this.bottomActive = this.bottomIcons.indexOf(name);
+        this.bottomActive = this.bottomIcons.indexOf(type);
         // 从最小化中去除
-        this.changeSmallWrapper("delete", name);
+        this.changeSmallWrapper("delete", type);
       }
     },
     // 双击事件，窗口打开时禁止拖动图标
@@ -875,16 +870,13 @@ export default {
       // 如果不在setTimeout期间内再点击，则无法触发双击事件
       if (this.doubleClickListen) {
         // 记事本文件
-        var type = "";
         var arr = "";
         var active = "";
-        if (icon.title.includes(".txt")) {
-          type = "txt";
+        if (icon.type == "txt") {
           active = "Txt";
           arr = "txts";
-        } else {
+        } else if(icon.type === 'chrome'){
           // app的是默认的
-          type = "chrome";
           arr = "apps";
           active = "App";
         }
@@ -896,7 +888,7 @@ export default {
           });
           return;
         }
-        this.handleShow(type);
+        this.handleShow(icon.type);
         this[arr].push(icon);
         this["active" + active] = !this["active" + active];
       }
@@ -905,10 +897,11 @@ export default {
       this.init();
       //创建链表结构
       class NodeList {
-        constructor(title, img, next) {
+        constructor(title, img, next, type) {
           this.title = title || "";
           this.img = img || "";
           this.next = next || null;
+          this.type = type;
         }
       }
       var iconNode = new NodeList();
@@ -945,6 +938,7 @@ export default {
       // 通过初始的数据渲染这个链表
       for (var i = 0; i < this.iconsData.length; i++) {
         iconNode.title = this.iconsData[i].name;
+        iconNode.type = this.iconsData[i].type;
         // iconNode.img = imgUrls.filter(item=>item.name === this.iconsData[i].type)[0].img;
         var imgUrl = imgUrls.filter(
           (item) => item.name === this.iconsData[i].type

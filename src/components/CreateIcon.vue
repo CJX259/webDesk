@@ -44,7 +44,7 @@ export default {
   },
   methods: {
     async onSubmit() {
-      if(!this.sizeForm.name || !this.sizeForm.type){
+      if(!this.sizeForm.name || !this.sizeForm.type ||(this.sizeForm.type === 'chrome' && !this.sizeForm.address)){
         this.$message({
           type: 'warning',
           message: '缺少必要参数'
