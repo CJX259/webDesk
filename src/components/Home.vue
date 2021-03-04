@@ -74,7 +74,7 @@
         >
           <template v-slot:default="pageData">
             <textarea
-              @keydown.ctrl.prevent="handleKeyDown($event, pageData.data)"
+              @keydown.ctrl.83.prevent="handleKeyDown($event, pageData.data)"
               class="txt"
               v-model="pageData.data.content"
               autofocus
@@ -251,11 +251,6 @@ export default {
         // console.log(this.rightIcon.title);
         if (!resp.data.data.err) {
           // 找到对应的arr，修改名字为新名字
-
-
-
-
-          
           // let index = 0;
           // if (this.rightIcon.type === "txt") {
           //   console.log(this.txts);
@@ -462,10 +457,8 @@ export default {
     },
     // 处理txt文本的保存
     async handleKeyDown(e, data) {
-      if (e.keyCode == 83) {
         // 登陆验证
         return await this.handleLogin(this.writeFile, data);
-      }
     },
     // 调用，写文件
     async writeFile(data) {
