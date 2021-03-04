@@ -7,7 +7,6 @@
         placeholder="请输入密码"
         v-model="password"
         type="password"
-        @keydown.enter.native="login"
       ></el-input>
       <el-button @click="login">确认</el-button>
     </div>

@@ -40,7 +40,7 @@
     >
       <div class="cover" v-if="mouseDown || activeWrapper !== name"></div>
       <div class="webpage">
-          <slot :data="data"></slot>
+        <slot :data="data"></slot>
       </div>
     </div>
   </div>
@@ -61,8 +61,9 @@ export default {
     "changeMax",
     // name是打开的格式（chrome, txt）
     "name",
+    "needClose",
     "iconsData",
-    "needInit"
+    "needInit",
   ],
   computed: {
     wrapperRefName() {
@@ -91,12 +92,17 @@ export default {
   watch: {
     // 父组件通知子组件把activeIndex修改成最后一位
     updateActive() {
-      console.log(this.apps.length);
       this.activeIndex = this.apps.length - 1;
     },
-    needInit(){
+    needInit() {
       this.init();
-    }
+    },
+    // 传入{index, type}
+    needClose(iconObj) {
+      if (iconObj.type === this.name) {
+        this.closePage(iconObj.index);
+      }
+    },
   },
 
   methods: {

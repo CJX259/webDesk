@@ -65,7 +65,6 @@ export default {
         return;
       }
       const resp = await this.submit(this.sizeForm);
-      console.log(resp);
       if (!resp.err) {
         //成功
         this.$message({

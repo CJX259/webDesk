@@ -43,6 +43,7 @@
           :closePageByIndex="closePage"
           :updateActive="activeApp"
           :max="chromeMax"
+          :needClose="needClose"
           name="chrome"
           :iconsData="iconsData.filter((item) => item.type === 'chrome')"
           :changeMax="changeMax"
@@ -66,6 +67,7 @@
           :max="txtMax"
           :changeMax="changeMax"
           name="txt"
+          :needClose="needClose"
           :needInit="applicationInit"
           :iconsData="iconsData.filter((item) => item.type === 'txt')"
           :changeSmallWrapper="changeSmallWrapper"
@@ -98,7 +100,7 @@
           :left="rightMenuPosition.x"
           :top="rightMenuPosition.y"
           :handleUpdate="clickUpdateByMenu"
-          :handleDelete="clickDeleteByMenu"
+          :handleDelete="handleDelete"
           :handleAdd="clickAddByMenu"
           :changeShow="changeRightMenu"
         />
@@ -179,6 +181,9 @@ export default {
       // 给子组件监听，来修改active
       activeApp: false,
       chromeMax: false,
+      // 监听，用来触发closePage函数
+      // {index, type}
+      needClose: {},
 
       //已打开的txt文件名
       txts: [],
@@ -243,7 +248,26 @@ export default {
           newName: data.name,
           address: data.address ? data.address : "",
         });
+        // console.log(this.rightIcon.title);
         if (!resp.data.data.err) {
+          // 找到对应的arr，修改名字为新名字
+
+
+
+
+          
+          // let index = 0;
+          // if (this.rightIcon.type === "txt") {
+          //   console.log(this.txts);
+          //   index = this.txts.indexOf(this.rightIcon.title);
+          //   // console.log(index);
+          //   this.txts[index] = data.name;
+          //   console.log(this.txts);
+          // } else if (this.rightIcon.type === "chrome") {
+          //   index = this.apps.indexOf(this.rightIcon.title);
+          //   this.apps[index] = data.name;
+          //   console.log(this.apps);
+          // }
           this.reload();
           return {
             err: false,
@@ -261,14 +285,30 @@ export default {
     clickUpdateByMenu() {
       this.changeShowUpdate(true);
     },
+    // 附上登录功能
+    async handleDelete() {
+      return await this.handleLogin(this.deleteByMenu);
+    },
     // 点击右键的删除
-    async clickDeleteByMenu() {
+    // 需要清除所属的arr，bottom和small
+    async deleteByMenu() {
       try {
-        await this.$confirm("此操作将永久删除该文件, 是否继续?", "提示", {
-          confirmButtonText: "确定",
-          cancelButtonText: "取消",
-          type: "warning",
-        });
+        const flag = await this.$confirm(
+          "此操作将永久删除该文件, 是否继续?",
+          "提示",
+          {
+            confirmButtonText: "确定",
+            cancelButtonText: "取消",
+            type: "warning",
+          }
+        );
+        if (flag !== "confirm") {
+          this.$message({
+            type: "warning",
+            message: "取消删除",
+          });
+          return;
+        }
         const resp = await axios.get("/api/icon/deleteicon", {
           params: {
             name: this.rightIcon.title,
@@ -280,6 +320,13 @@ export default {
             type: "success",
             message: "删除成功!",
           });
+          // 调用子组件Application里的关闭窗口方法
+          let index =
+            this.rightIcon.type === "txt"
+              ? this.txts.indexOf(this.rightIcon.title)
+              : this.apps.indexOf(this.rightIcon.title);
+          this.needClose = { type: this.rightIcon.type, index };
+          // 刷新页面
           this.reload();
         } else {
           this.$message({
@@ -360,7 +407,7 @@ export default {
       if (data.type === "txt" && !data.name.includes(".txt")) {
         // 把.后面的内容全部替换成txt即可
         const reg = new RegExp(/./g);
-        console.log(data.name.replace(reg, ''));
+        console.log(data.name.replace(reg, ""));
         console.log(data.name);
         data.name += ".txt";
       }
@@ -783,7 +830,9 @@ export default {
       this.colLength = Math.floor(
         (this.$el.offsetHeight - footerHeight - 10) / this.iconHeight
       );
-      this.wrapperLength = Math.floor((this.$el.offsetWidth - 10) / this.iconWidth);
+      this.wrapperLength = Math.floor(
+        (this.$el.offsetWidth - 10) / this.iconWidth
+      );
       // 初始化所有栅格
       // 这里数组的第一个是0项
       for (var i = 0; i < this.wrapperLength; i++) {
@@ -875,7 +924,7 @@ export default {
         if (icon.type == "txt") {
           active = "Txt";
           arr = "txts";
-        } else if(icon.type === 'chrome'){
+        } else if (icon.type === "chrome") {
           // app的是默认的
           arr = "apps";
           active = "App";
