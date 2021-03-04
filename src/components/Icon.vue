@@ -33,9 +33,10 @@ export default {
     display: inline-block;
     text-align: center;
     width: 100%;
+    height: 20px;
     // display: flex;
     color: #fff;
-    line-height: 15px;
+    line-height: 20px;
     // justify-content: center;
     user-select: none;
     text-overflow: ellipsis;
