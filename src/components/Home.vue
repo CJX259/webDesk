@@ -401,15 +401,23 @@ export default {
     async createIcon(data) {
       if (data.type === "txt" && !data.name.includes(".txt")) {
         // 把.后面的内容全部替换成txt即可
-        const reg = new RegExp(/./g);
-        console.log(data.name.replace(reg, ""));
-        console.log(data.name);
         data.name += ".txt";
+      }
+      // 前端验证重名
+      for (let i = 0; i < this.iconsData.length; i++) {
+        let icon = this.iconsData[i];
+        if (icon.name === data.name && icon.type === data.type) {
+          console.log(111);
+          return {
+            err: true,
+            msg: "存在重复名字，创建失败",
+          };
+        }
       }
       const resp = await axios.post("/api/icon/addicon", {
         ...data,
       });
-      if (!resp.data.data.err) {
+      if (resp.data.data && !resp.data.data.err) {
         // 写入成功,重新请求数据
         this.reload();
         return {
@@ -419,7 +427,7 @@ export default {
       } else {
         return {
           err: true,
-          msg: resp.data.data.msg,
+          msg: resp.data.msg,
         };
       }
     },
@@ -457,8 +465,8 @@ export default {
     },
     // 处理txt文本的保存
     async handleKeyDown(e, data) {
-        // 登陆验证
-        return await this.handleLogin(this.writeFile, data);
+      // 登陆验证
+      return await this.handleLogin(this.writeFile, data);
     },
     // 调用，写文件
     async writeFile(data) {
