@@ -1,8 +1,9 @@
 const { Sequelize } = require('sequelize');
-const sequelize = new Sequelize('webDesk', "root", "123456",{
-  host: "127.0.0.1",
+const dbConf = require('../db.json');
+const sequelize = new Sequelize('webDesk', dbConf.user, dbConf.password,{
+  host: dbConf.host,
   dialect: "mysql",
-  port: "3306",
+  port: dbConf.port,
   logging: false,
 });
 sequelize.authenticate();
