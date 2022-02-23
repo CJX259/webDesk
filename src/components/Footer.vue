@@ -18,6 +18,7 @@
       </div>
       <span class="little-col"></span>
     </div>
+    <div class="beian"><a href="https://beian.miit.gov.cn/">粤ICP备20041191号</a></div>
   </div>
 </template>
 <script>
@@ -69,7 +70,7 @@ export default {
 <style lang="less" scoped>
 .footer {
   width: 100%;
-  height: 40px;
+  height: 60px;
   background: #283732;
   position: absolute;
   bottom: 0px;
@@ -145,6 +146,16 @@ export default {
       display: inline-block;
       background: #aaa;
     }
+  }
+  .beian{
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    z-index: 10;
+    top: 40px;
+    position: absolute;
+    background: #fff;
+    text-align: center;
   }
 }
 </style>
